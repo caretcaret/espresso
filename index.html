@@ -31,126 +31,120 @@
         <h1>
 <a id="espresso" class="anchor" href="#espresso" aria-hidden="true"><span class="octicon octicon-link"></span></a>Espresso</h1>
 
-<h3>
-<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h3>
-
-<p>Espresso is an implementation of <a href="http://caffe.berkeleyvision.org/">Caffe</a>, a framework for deep learning, in the <a href="http://halide-lang.org/">Halide</a> image processing language. It will support fine-tuning of deep neural networks to achieve high performance of training and evaluation on multiple platforms.</p>
+<h2>
+<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project checkpoint</h2>
 
 <h3>
-<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h3>
+<a id="what-weve-accomplished-so-far" class="anchor" href="#what-weve-accomplished-so-far" aria-hidden="true"><span class="octicon octicon-link"></span></a>What we've accomplished so far</h3>
 
-<p>Caffe is a framework for convolutional neural networks that allows users to define deep learning models and optimization using configuration files rather than hard-coding them. The framework prides itself on its training and evaluation speeds through the use of GPU processing. It is widely employed in research, prototyping, and large scale applications requiring speed such as computer vision and speech processing.</p>
+<p>The concerns we've raised in the project proposal describe skepticism about the capabilities of Halide and whether it would be able to evaluate neural networks, because Halide is a domain-specific language used for image processing. The first phase of our project was to scope out how feasible this task was.</p>
 
-<p>Halide is a programming language embedded in C++ designed for implementing high-performance image processing pipelines. It simplifies implementation by decoupling algorithms (the computations required to solve a problem) from their scheduling (the order, locality, and storage work should be executed with). This allows for performance fine-tuning on multiple platforms without significantly modifying the structure of code.</p>
-
-<p>In this project, we are interested in exploring the possibility of implementing neural networks using the Halide philosophy, so that neural network code can enjoy both maintainability and high performance. By utilizing a compiler that is aware of execution order and storage, we hope to produce highly performant parallel code that is competitive with Caffe.</p>
+<p>Up until now, we've created some starter code in Halide/C++ that is able to evaluate a simple feed-forward neural network without adding any specialized scheduling operations. This network is currently a toy network suitable for research and does not have the industrial strength to solve any classical machine learning problems. However, based on what we've learned about the capabilities of Halide, we expect to be able to implement a convolutional network in Halide capable of image recognition with no additional modifications to the Halide compiler.</p>
 
 <h3>
-<a id="the-challenge" class="anchor" href="#the-challenge" aria-hidden="true"><span class="octicon octicon-link"></span></a>The challenge</h3>
+<a id="recalibrating-our-goals-and-deliverables" class="anchor" href="#recalibrating-our-goals-and-deliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recalibrating our goals and deliverables</h3>
 
-<p>Halide is not a Turing-complete language. It is able to describe steps in an image processing pipeline for use on a GPU, but any looping constructs would have to be done in a host language. Additionally, the tools provided by Halide are tailored to image processing operations, so it is not yet known whether it has the expressiveness to implement convolutional neural network code efficiently. If the available constructs are insufficient for our needs, we will extend the Halide compiler to include them. For example, it may be necessary to extend Halide to be aware of NVIDIA's <a href="https://developer.nvidia.com/cuDNN">cuDNN library</a>.</p>
+<p>We also expect training neural networks to be possible, but the the tools provided by Halide may not be enough to do so efficiently. Our main source of friction for training is that training is an iterative process modifying large amounts of memory at a time. On the other hand, Halide seems only to be able to efficiently take in an input image and produce a single output image. This limitation can be overcome by writing host-side code and repeatedly copying buffers, but it is unclear how much slower this approach is than optimal.</p>
 
-<p>The simplest neural networks enjoy easy parallelization. Many feed-forward neural networks can be evaluated with the composition of three operations: matrix multiplication, vector addition, and the rectifier [ ReLU(x) = \max(x, 0) ]. These operations are very natural to perform on a GPU, with highly performant matrix multiplication having been extensively studied.</p>
+<p>One concern expressed by course staff was that implementing Caffe-like behavior for our project would be a "bonus" and not a completely necessary task. However, we continue to express interest in such a feature because it would be useful in setting up, debugging, and optimizing real-world neural networks.</p>
 
-<p>Convolutional neural networks add matrix convolution between an image and a kernel. Because this operation is widely used in image processing, we expect that convolutional neural networks are feasible in Halide.</p>
-
-<p>We also expect that optimization efforts will lie in the topology of a deep neural network, in which speed up of the composition of these operations becomes important. Also, training neural networks via backpropagation presents a challenge to locality because the intermediate layer activations need to be saved.</p>
-
-<p>Since Caffe has been tuned and optimized by more than a thousand contributors, it sets a high bar for performance.</p>
-
-<h3>
-<a id="resources" class="anchor" href="#resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Resources</h3>
-
-<p>We will be starting our code from scratch in C++. Caffe and Halide are open source and will serve as references during development.</p>
-
-<p>For information on implementing neural networks, we consult the <a href="http://www.iro.umontreal.ca/%7Ebengioy/dlbook/">Deep Learning</a> book by Yoshua Benjio, et al.</p>
-
-<p>For development, we will be able to use ordinary hardware; Halide targets x86/SSE, ARM v7/NEON, CUDA, Native Client, and OpenCL. In order to compete with Caffe, we will use their <a href="http://caffe.berkeleyvision.org/performance_hardware.html">benchmarks on NVIDIA GPUs</a>, which include NVIDIA K40, NVIDIA Titan, NVIDIA K20, and NVIDIA GTX 770.</p>
-
-<h3>
-<a id="goals-and-deliverables" class="anchor" href="#goals-and-deliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Goals and deliverables</h3>
-
-<p>The project will be implemented in layers of increasing difficulty and complexity. The parts we will implement will depend on what is possible.</p>
+<p>We have completed one of our "plan to achieve" goals: Implement evaluation of a hard-coded neural network. Our stated goals remain feasible (or unnecessary, in the case of modifying Halide). However, we have decided to prioritize some goals over others in the interest of the Parallelism competition. Those goals are restated here:</p>
 
 <h4>
 <a id="plan-to-achieve" class="anchor" href="#plan-to-achieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Plan to achieve</h4>
 
 <ol>
-<li>Explore Halide's capabilities by implementing evaluation of a simple hard-coded neural network. If necessary, extend Halide with the appropriate functionality to enable neural network evaluation.</li>
-<li>Implement training of a simple hard-coded neural network. If necessary, extend Halide with functionality to enable neural network training.</li>
-<li>Implement training and evaluation of convolutional neural networks. If necessary, extend Halide with functionality to enable convolutional neural networks.</li>
+<li>[x] Explore Halide's capabilities by implementing evaluation of a simple hard-coded neural network. <del>If necessary, extend Halide with the appropriate functionality to enable neural network evaluation.</del>
+</li>
+<li>[ ] Implement evaluation of convolutional neural networks. <del>If necessary, extend Halide with functionality to enable convolutional neural networks.</del>
+</li>
+<li>[ ] Implement evaluation of neural networks constructed from parsing Caffe configuration files.</li>
 </ol>
 
 <h4>
 <a id="hope-to-achieve" class="anchor" href="#hope-to-achieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hope to achieve</h4>
 
 <ol>
-<li>Implement training and evaluation of neural networks constructed from parsing Caffe configuration files.</li>
-<li>Optimize the training and evaluation of neural networks to be competitive with Caffe.</li>
+<li>[ ] Optimize the training and evaluation of neural networks to be competitive with Caffe.</li>
+<li>[ ] Implement training of a simple hard-coded neural network. If necessary, extend Halide with functionality to enable neural network training.</li>
+<li>[ ] Implement training of convolutional neural networks.</li>
+<li>[ ] Create a demo demonstrating real-time network evaluation.</li>
 </ol>
 
 <h4>
 <a id="stretch-goals" class="anchor" href="#stretch-goals" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stretch goals</h4>
 
 <ol>
-<li>Beat Caffe in a benchmark.</li>
-<li>Improve the debugging experience in Halide.</li>
-<li>Implement additional types of neural networks, such as <a href="http://arxiv.org/abs/1502.03167">batch normalization</a> or <a href="http://arxiv.org/abs/1502.01852">parameterized ReLUs</a>.</li>
+<li>[ ] Beat Caffe in a benchmark.</li>
+<li>[ ] Improve the debugging experience in Halide.</li>
+<li>[ ] Implement additional types of neural networks, such as <a href="http://arxiv.org/abs/1502.03167">batch normalization</a> or <a href="http://arxiv.org/abs/1502.01852">parameterized ReLUs</a>.</li>
 </ol>
 
 <h4>
-<a id="demo" class="anchor" href="#demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Demo</h4>
+<a id="deliverables" class="anchor" href="#deliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deliverables</h4>
 
-<p>To demonstrate our results, we will present code snippets demonstrating the ease of use of our system, along with graphs of benchmark results. If time allows, a simple real-time computer vision application could be created to show off the effectiveness of our system.</p>
+<ol>
+<li>Presentation explaining the components of our system, placing emphasis on ease of use.</li>
+<li>Graphs demonstrating the efficiency of our project as compared to Caffe.</li>
+<li>A small demo demonstrating real-time network evaluation using our project.</li>
+</ol>
 
 <h3>
-<a id="platform-choice" class="anchor" href="#platform-choice" aria-hidden="true"><span class="octicon octicon-link"></span></a>Platform choice</h3>
-
-<p>Halide is multi-platform. This will allow neural networks to be run efficiently on many devices as they gain popularity. Halide's host language is C++, so we will be implementing our platform with C++.</p>
-
-<h3>
-<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h3>
+<a id="detailed-schedule" class="anchor" href="#detailed-schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Detailed schedule</h3>
 
 <h4>
-<a id="week-1-2015-apr-6---2015-apr-12" class="anchor" href="#week-1-2015-apr-6---2015-apr-12" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 1 (2015 Apr 6 - 2015 Apr 12)</h4>
+<a id="week-2-tail-2015-apr-16---2015-apr-19" class="anchor" href="#week-2-tail-2015-apr-16---2015-apr-19" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 2-tail (2015 Apr 16 - 2015 Apr 19)</h4>
 
 <ul>
-<li>Learn about Halide, Caffe, and neural networks by studying tutorials and source code.</li>
-<li>Create starter code by implementing evaluation of a hard-coded neural network.</li>
+<li>Explore the efficiency of training a simple hard-coded neural network. (jczhang)</li>
+<li>Perform preliminary optimization to understand Halide scheduling. (jchen4)</li>
 </ul>
 
 <h4>
-<a id="week-2-2015-apr-13---2015-apr-19" class="anchor" href="#week-2-2015-apr-13---2015-apr-19" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 2 (2015 Apr 13 - 2015 Apr 19)</h4>
+<a id="week-3-head-2015-apr-20---2015-apr-22" class="anchor" href="#week-3-head-2015-apr-20---2015-apr-22" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 3-head (2015 Apr 20 - 2015 Apr 22)</h4>
 
 <ul>
-<li>Implement training of the same hard-coded neural network.</li>
-<li>Write project checkpoint report.</li>
-<li>If network evaluation or training is unsuccessful, explore options to extend Halide to allow them to work.</li>
+<li>Extend the hard-coded neural network with an implementation of convolutions. (jczhang)</li>
+<li>Explore the protocol buffer configuration files used by Caffe. (jchen4)</li>
 </ul>
 
 <h4>
-<a id="week-3-2015-apr-20---2015-apr-26" class="anchor" href="#week-3-2015-apr-20---2015-apr-26" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 3 (2015 Apr 20 - 2015 Apr 26)</h4>
+<a id="week-3-tail-2015-apr-23---2015-apr-26" class="anchor" href="#week-3-tail-2015-apr-23---2015-apr-26" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 3-tail (2015 Apr 23 - 2015 Apr 26)</h4>
 
 <ul>
-<li>Extend the hard-coded neural network with an implementation of convolutions.</li>
-<li>Implement extensions to Halide, if necessary.</li>
-<li>Do some preliminary optimization to understand Halide scheduling.</li>
+<li>Implement infrastructure (the "glue") for neural network evaluation. (jczhang)</li>
+<li>Implement loading preconfigured neural networks in the Caffe format. (jchen4)</li>
 </ul>
 
 <h4>
-<a id="week-4-2015-apr-27---2015-may-3" class="anchor" href="#week-4-2015-apr-27---2015-may-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 4 (2015 Apr 27 - 2015 May 3)</h4>
+<a id="week-4-head-2015-apr-27---2015-apr-29" class="anchor" href="#week-4-head-2015-apr-27---2015-apr-29" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 4-head (2015 Apr 27 - 2015 Apr 29)</h4>
 
 <ul>
-<li>Implement training and evaluation of dynamically constructed neural networks by parsing Caffe configurations.</li>
-<li>Optimize the performance of training and evaluation.</li>
+<li>Optimize the performance of evaluation of Caffe preconfigured networks by testing scheduling configurations. (jczhang, jchen4)</li>
 </ul>
 
 <h4>
-<a id="week-5-2015-may-4---2015-may-10" class="anchor" href="#week-5-2015-may-4---2015-may-10" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 5 (2015 May 4 - 2015 May 10)</h4>
+<a id="week-4-tail-2015-apr-30---2015-may-3" class="anchor" href="#week-4-tail-2015-apr-30---2015-may-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 4-tail (2015 Apr 30 - 2015 May 3)</h4>
 
 <ul>
-<li>Tie up loose ends, finish incomplete code, investigate results.</li>
-<li>Create demo for presentation day.</li>
+<li>Implement training of convolutional neural networks. (jczhang)</li>
+<li>Continue optimizing performance of evaluation of networks. (jchen4)</li>
+</ul>
+
+<h4>
+<a id="week-5-head-2015-may-4---2015-may-6" class="anchor" href="#week-5-head-2015-may-4---2015-may-6" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 5-head (2015 May 4 - 2015 May 6)</h4>
+
+<ul>
+<li>Finish incomplete code. (jczhang, jchen4)</li>
+<li>Collect data on performance benchmarks. (jczhang, jchen4)</li>
+</ul>
+
+<h4>
+<a id="week-5-tail-2015-may-7---2015-may-10" class="anchor" href="#week-5-tail-2015-may-7---2015-may-10" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 5-tail (2015 May 7 - 2015 May 10)</h4>
+
+<ul>
+<li>Finish incomplete code, or create a real-time application utilizing our project. (jczhang, jchen4)</li>
+<li>Finish demo for presentation day. (jczhang, jchen4)</li>
 </ul>
       </section>
       <footer>
