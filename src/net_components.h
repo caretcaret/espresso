@@ -58,12 +58,15 @@ public:
 
 class InnerProduct : public Component {
 public:
-  /* W: input.x * n_output, b: n_output */
+  /* W: output_x * (input.x + 1), where the last column is the bias */
   /* TODO: use blas gemv/gemm */
-  InnerProduct(Component input, Halide::Func W, Halide::Func b, int output_x)
+  InnerProduct(Component input, Halide::Func W, int output_x)
     : Component(output_x, input.y, input.z, input.w) {
     Halide::Var i, j, k, l;
     Halide::RDom r(0, input.x);
+    Halide::Func b;
+
+    b(i) = W(i, input.x);
     forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l)) + b(i);
   }
 };
@@ -97,9 +100,9 @@ public:
   }
 };
 
-class Pooling : public Component {
+class MaxPool : public Component {
 public:
-  Pooling(Component input)
+  MaxPool(Component input)
     : Component(input.x, input.y, input.z, input.w) { // TODO
   }
 };
