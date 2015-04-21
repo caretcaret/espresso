@@ -4,7 +4,7 @@
 #include <random>
 
 #include "image_util.h"
-#include "net_components.h"
+#include "components.h"
 
 
 int main(int argc, char **argv) {
@@ -20,9 +20,9 @@ int main(int argc, char **argv) {
   Halide::ImageParam W1(Halide::type_of<float>(), 2);
   Halide::ImageParam W2(Halide::type_of<float>(), 2);
 
-  Espresso::Component input_layer = Espresso::InputLayer(input, n_input, 1, 1, 1);
-  Espresso::Component layer1 = Espresso::ReLU(Espresso::InnerProduct(input_layer, Halide::Func(W1), n_hidden));
-  Espresso::Component layer2 = Espresso::Softmax(Espresso::InnerProduct(layer1, Halide::Func(W2), n_classes));
+  Espresso::Layer input_layer = Espresso::MemoryData(input, n_input, 1, 1, 1);
+  Espresso::Layer layer1 = Espresso::ReLU(Espresso::InnerProduct(input_layer, Halide::Func(W1), n_hidden));
+  Espresso::Layer layer2 = Espresso::Softmax(Espresso::InnerProduct(layer1, Halide::Func(W2), n_classes));
 
   // instantiate inputs
   Halide::Image<float> input_(n_input, 1, 1, 1);
