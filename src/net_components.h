@@ -88,22 +88,43 @@ public:
 
 class Convolution : public Component {
 public:
-  Convolution(Component input, Halide::Func kernel, int kernel_x, int kernel_y)
+  Convolution(Component input, Halide::Func kernel, int kernel_x, int kernel_y, int padding_x, int padding_y, int stride_x, int stride_y)
     : Component(input.x - kernel_x + 1, input.y - kernel_y + 1, input.z, input.w) {
-    // TODO: verify
+    // TODO: fix
     Halide::Var i, j, k, l;
     Halide::RDom r(0, kernel_x, 0, kernel_y);
     Halide::RVar m = r.x;
     Halide::RVar n = r.y;
 
-    forward(i, j, k, l) = Halide::sum(Halide::sum(input.forward(i-m, j-n, k, l) * kernel(m, n)));
+    forward(i, j, k, l) = Halide::sum(Halide::sum(input.forward(i - m, j - n, k, l) * kernel(m, n)));
   }
 };
 
 class MaxPool : public Component {
 public:
-  MaxPool(Component input)
-    : Component(input.x, input.y, input.z, input.w) { // TODO
+  MaxPool(Component input, int pool_x, int pool_y)
+    : Component(input.x, input.y, input.z, input.w) {
+    // assume pool_x and pool_y are odd
+    Halide::Var i, j, k, l;
+    Halide::RDom r(-pool_x / 2, pool_x / 2, -pool_y / 2, pool_y / 2);
+    Halide::RVar m = r.x;
+    Halide::RVar n = r.y;
+
+    forward(i, j, k, l) = Halide::maximum(input.forward(i + m, j + n, k, l));
+  }
+};
+
+class AvgPool : public Component {
+public:
+  AvgPool(Component input, int pool_x, int pool_y)
+    : Component(input.x, input.y, input.z, input.w) {
+    // assume pool_x and pool_y are odd
+    Halide::Var i, j, k, l;
+    Halide::RDom r(-pool_x / 2, pool_x / 2, -pool_y / 2, pool_y / 2);
+    Halide::RVar m = r.x;
+    Halide::RVar n = r.y;
+
+    forward(i, j, k, l) = Halide::sum(input.forward(i + m, j + n, k, l)) / (pool_x * pool_y);
   }
 };
 
