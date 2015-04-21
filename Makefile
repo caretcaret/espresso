@@ -2,7 +2,7 @@
 
 all: build
 build:
-	g++ -std=c++11 -Iinclude -Lbin -lHalide src/espresso.cpp -o build/espresso
+	clang++ -O2 -Wall -Werror -std=c++11 -Iinclude -Lbin -lHalide src/espresso.cpp -o build/espresso
 run: build
 	build/espresso
 clean:
