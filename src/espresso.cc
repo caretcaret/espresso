@@ -51,9 +51,12 @@ double test_random(int n_input, int n_hidden, int n_classes, std::default_random
   W1.set(W1_);
   W2.set(W2_);
 
+  // JIT compile before timing code
+  layer2.forward.compile_jit();
+
   double start_time = CycleTimer::currentSeconds();
 
-  // JIT compile and run
+  // Run compiled code
   Halide::Image<float> output = layer2.forward.realize(n_classes, 1, 1, 1);
 
   double end_time = CycleTimer::currentSeconds();
