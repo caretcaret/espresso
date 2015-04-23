@@ -1,5 +1,5 @@
 build/*
-include/*
+include/Halide*
 bin/*
 
 # Dependency files
