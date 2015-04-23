@@ -1,9 +1,41 @@
-.PHONY: clean build
+CC = clang++
 
-all: build
-build:
-	clang++ -O2 -Wall -Werror -std=c++11 -Iinclude -Lbin -lHalide src/espresso.cpp -o build/espresso
-run: build
-	build/espresso
+PROJDIRS := src include build/gen
+
+SRCFILES := $(shell find $(PROJDIRS) -type f -name '*.cc' 2>/dev/null)
+HDRFILES := $(shell find $(PROJDIRS) -type f -name '*.h' 2>/dev/null)
+
+OBJFILES := $(patsubst %.cc,%.o,$(SRCFILES))
+
+DEPFILES := $(patsubst %.cc,%.d,$(SRCFILES))
+
+ALLFILES := $(SRCFILES) $(HDRFILES)
+
+PROTO_SRC = $(shell find proto -type f -name '*.proto')
+
+LIBS= -lHalide -lprotobuf
+LIBDIRS := -Lbin -L/usr/local/lib -L/usr/local/bin
+
+CXXFLAGS= -O2 -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS))
+LDFLAGS = $(LIBDIRS) $(LIBS)
+
+
+.PHONY: clean build proto prebuild run clean
+
+all: prebuild proto
+	@$(MAKE) -s espresso
+prebuild:
+	@mkdir -p build build/gen
+espresso: $(OBJFILES)
+	@$(CC) $(CXXFLAGS) $(LDFLAGS) $? -o build/espresso
+proto: prebuild
+	@protoc --cpp_out=./build/gen $(PROTO_SRC)
+%.o: %.cc Makefile
+	@$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+run: all
+	@build/espresso
 clean:
-	rm build/*
+	@-rm -rf *.d *.o build
+
+-include $(DEPFILES)
+
