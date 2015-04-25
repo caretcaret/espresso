@@ -1,10 +1,9 @@
-#include "Halide.h"
-
 #include <iostream>
 #include <random>
 
-#include "image_util.h"
-#include "components.h"
+#include "espresso.h"
+
+
 #include "CycleTimer.h"
 
 double test_random(int n_input, int n_hidden, int n_classes, std::default_random_engine& generator);
@@ -13,6 +12,14 @@ double test_random(int n_input, int n_hidden, int n_classes, std::default_random
 int main(int argc, char **argv) {
   std::random_device rd;
   std::default_random_engine generator(rd());
+
+  Espresso::SolverParameter solve_params;
+  Espresso::NetParameter net_params;
+
+  ReadSolverParamsFromTextFile("./models/bvlc_reference_caffenet/solver.prototxt", &solve_params);
+  ReadNetParamsFromTextFile(solve_params.net(), &net_params);
+
+  std::cout << net_params.name() << std::endl;
 
   int n_input = 5;
   int n_hidden = 7;

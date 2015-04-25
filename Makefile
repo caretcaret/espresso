@@ -13,7 +13,7 @@ ALLFILES := $(SRCFILES) $(HDRFILES)
 
 PROTO_SRC = $(shell find proto -type f -name '*.proto')
 
-LIBS= -lHalide -lprotobuf
+LIBS= -lHalide -lprotobuf -lglog
 LIBDIRS := -Lbin -L/usr/local/lib -L/usr/local/bin
 
 CXXFLAGS= -O2 -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS))
