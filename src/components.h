@@ -40,6 +40,7 @@ public:
             (input.y + 2 * pad_y - kernel_y) / stride_y + 1,
             n_filters,
             input.w) {
+    // TODO: fix group
     // Kernel size is kernel_x by kernel_y by input.z by n_filters / group, where n_filters is the number of filters,
     // and +1 on input.z if bias is used; bias is stored at 0, 0, input.z for each filter.
     // kernel_x, kernel_y must be odd
@@ -49,9 +50,10 @@ public:
     Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input.z);
 
     padded(i, j, k, l) = 0;
-    padded(i * 2 * pad_x, j * 2 * pad_y, k, l) = input.forward(i, j, k, l);
+    padded(i * (2 * pad_x + 1), j * (2 * pad_y + 1), k, l) = input.forward(i, j, k, l);
 
-    convolved(i, j, k, l) = Halide::sum(input.forward(i + r.x, j + r.y, r.z, l) * kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, k / group));
+    convolved(i, j, k, l) = Halide::sum(input.forward(i + r.x, j + r.y, r.z, l) *
+        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, k / group));
     if (bias_term) {
       bias(k) = kernel(0, 0, input.z, k / group);
       convolved(i, j, k, l) += bias(k);
@@ -75,7 +77,7 @@ public:
     Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
 
     padded(i, j, k, l) = 0;
-    padded(i * 2 * pad_x, j * 2 * pad_y, k, l) = input.forward(i, j, k, l);
+    padded(i * (2 * pad_x + 1), j * (2 * pad_y + 1), k, l) = input.forward(i, j, k, l);
 
     if (method == "max") {
       pooled(i, j, k, l) = Halide::maximum(padded(i + r.x, j + r.y, k, l));
