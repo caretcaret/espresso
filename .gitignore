@@ -1,6 +1,9 @@
 build/*
-include/*
+include/Halide*
 bin/*
+
+# Dependency files
+*.d
 
 # Compiled Object files
 *.slo
@@ -30,3 +33,6 @@ bin/*
 *.exe
 *.out
 *.app
+
+# OS files
+.DS_Store
