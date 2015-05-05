@@ -2,6 +2,7 @@
 #define ESPRESSO_COMPONENTS_H
 
 #include "Halide.h"
+#include "LayerFactory.h"
 #include "layer.h"
 #include "proto/caffe.pb.h"
 
@@ -40,10 +41,13 @@ public:
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
   }
+
+  Convolution(const LayerParameter& param) : Layer(1, 1, 1, 1) {
+
+  }
 };
 
 REGISTER_LAYER_CLASS(Convolution);
-
 
 class Pooling : public Layer {
 public:
