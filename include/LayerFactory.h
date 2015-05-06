@@ -86,8 +86,6 @@ public:
   }                                                                            \
   REGISTER_LAYER_CREATOR(type, Creator_##type)
 
-
-
 }   // namespace Espresso
 
 #endif // ESPRESSO_LAYERFACTORY_H

@@ -2,7 +2,6 @@
 #define ESPRESSO_COMPONENTS_H
 
 #include "Halide.h"
-#include "LayerFactory.h"
 #include "layer.h"
 #include "proto/caffe.pb.h"
 
@@ -47,7 +46,6 @@ public:
   }
 };
 
-REGISTER_LAYER_CLASS(Convolution);
 
 class Pooling : public Layer {
 public:
