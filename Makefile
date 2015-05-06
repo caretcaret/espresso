@@ -35,7 +35,7 @@ proto: prebuild
 run: all
 	@build/espresso
 clean:
-	@-rm -rf *.d *.o build
+	@-rm -rf src/*.d src/*.o build
 
 -include $(DEPFILES)
 

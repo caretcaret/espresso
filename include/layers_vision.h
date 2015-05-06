@@ -27,11 +27,12 @@ public:
     Halide::Func convolved("convolved");
     Halide::Func bias("bias");
     Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input.z);
+    Halide::RDom s(0, input.x, 0, input.y);
 
-    padded(i, j, k, l) = 0;
-    padded(i * (2 * pad_x + 1), j * (2 * pad_y + 1), k, l) = input.forward(i, j, k, l);
+    padded(i, j, k, l) = 0.0f;
+    padded((2 * pad_x + 1) * s.x, (2 * pad_y + 1) * s.y, k, l) = input.forward(s.x, s.y, k, l);
 
-    convolved(i, j, k, l) = Halide::sum(input.forward(i + r.x, j + r.y, r.z, l) *
+    convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, r.z, l) *
         kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, k / group));
     if (bias_term) {
       bias(k) = kernel(0, 0, input.z, k / group);
@@ -42,7 +43,6 @@ public:
   }
 
   Convolution(const LayerParameter& param) : Layer(1, 1, 1, 1) {
-
   }
 };
 
@@ -59,9 +59,10 @@ public:
     Halide::Func pooled("pooled");
     Halide::Func rand_x, rand_y;
     Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
+    Halide::RDom s(0, input.x, 0, input.y);
 
-    padded(i, j, k, l) = 0;
-    padded(i * 2 * pad_x, j * 2 * pad_y, k, l) = input.forward(i, j, k, l);
+    padded(i, j, k, l) = 0.0f;
+    padded((2 * pad_x + 1) * s.x, (2 * pad_y + 1) * s.y, k, l) = input.forward(s.x, s.y, k, l);
 
     if (method == "max") {
       pooled(i, j, k, l) = Halide::maximum(padded(i + r.x, j + r.y, k, l));
@@ -88,9 +89,10 @@ public:
     Halide::Func normalizer("normalizer");
     Halide::Func padded("padded");
     Halide::RDom r(-region_x / 2, region_x / 2 + 1, -region_y / 2, region_y / 2 + 1, -region_z / 2, region_z / 2 + 1);
+    Halide::RDom s(0, input.x, 0, input.y, 0, input.z);
 
-    padded(i, j, k, l) = 0;
-    padded(i, j, k, l) = input.forward(i, j, k, l);
+    padded(i, j, k, l) = 0.0f;
+    padded(s.x, s.y, s.z, l) = input.forward(s.x, s.y, s.z, l);
 
     activation(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, k + r.z, l));
     normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
