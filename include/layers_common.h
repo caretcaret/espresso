@@ -92,7 +92,7 @@ public:
 
 class Eltwise : public Layer {
 public:
-  Eltwise(Layer input1, Layer input2, std::string op="sum")
+  Eltwise(std::string op, Layer input1, Layer input2)
     : Layer(input1.x, input1.y, input1.z, input1.w) {
     if (op == "sum") {
       forward(i, j, k, l) = input1.forward(i, j, k, l) + input2.forward(i, j, k, l);
@@ -108,12 +108,13 @@ public:
 
 class Concat : public Layer {
 public:
-  Concat(std::initializer_list<Layer> inputs, int axis=0)
+  Concat(int axis, std::initializer_list<Layer> inputs)
     // not the actual dimensions; the axis of concatenation is set again below
     : Layer(inputs.begin()->x, inputs.begin()->y, inputs.begin()->z, inputs.begin()->w) {
     // layers may only be concatenated along one axis, all other axes must have the same dimensions
 
     int offset = 0;
+    forward(i, j, k, l) = 0.0f;
 
     // TODO: how to make this cleaner >.<
     if (axis == 0) {

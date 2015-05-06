@@ -6,6 +6,9 @@
 
 #include <glog/logging.h>
 
+
+namespace Espresso {
+
 double run_net(Espresso::Layer output_layer) {
   // JIT compile before timing code
   output_layer.forward.compile_jit();
@@ -84,7 +87,62 @@ double test_LRN(std::default_random_engine& generator,
   return run_net(output_layer);
 }
 
-double test_random(std::default_random_engine& generator,
+double test_flatten(std::default_random_engine& generator,
+    int input_x=5, int input_y=7, int input_z=2, int input_w=3) {
+  Halide::ImageParam input(Halide::type_of<float>(), 4);
+
+  Espresso::Layer input_layer = Espresso::MemoryData(input, input_x, input_y, input_z, input_w);
+  Espresso::Layer output_layer = Espresso::Flatten(input_layer);
+
+  Halide::Image<float> input_(input_x, input_y, input_z, input_w);
+  Espresso::fill_random(input_, generator, 0.0f, 1.0f);
+
+  input.set(input_);
+
+  LOG(INFO) << input_;
+
+  return run_net(output_layer);
+}
+
+double test_eltwise(std::default_random_engine& generator,
+    int input_x=5, int input_y=7, int input_z=2, int input_w=3) {
+  Halide::ImageParam input(Halide::type_of<float>(), 4);
+
+  Espresso::Layer input_layer = Espresso::MemoryData(input, input_x, input_y, input_z, input_w);
+  Espresso::Layer output_layer =
+    Espresso::Eltwise("max", Espresso::Eltwise("prod", Espresso::Eltwise("sum", input_layer, input_layer), input_layer), input_layer);
+
+  Halide::Image<float> input_(input_x, input_y, input_z, input_w);
+  Espresso::fill_random(input_, generator, 0.0f, 1.0f);
+
+  input.set(input_);
+
+  LOG(INFO) << input_;
+
+  return run_net(output_layer);
+}
+
+double test_concat(std::default_random_engine& generator,
+    int input_x=5, int input_y=7, int input_z=2, int input_w=3) {
+  Halide::ImageParam input(Halide::type_of<float>(), 4);
+
+  Espresso::Layer input_layer = Espresso::MemoryData(input, input_x, input_y, input_z, input_w);
+  Espresso::Layer xwise_layer = Espresso::Concat(0, {input_layer, input_layer, input_layer});
+  Espresso::Layer ywise_layer = Espresso::Concat(1, {xwise_layer, xwise_layer});
+  Espresso::Layer zwise_layer = Espresso::Concat(2, {ywise_layer, ywise_layer});
+  Espresso::Layer output_layer = Espresso::Concat(3, {zwise_layer});
+
+  Halide::Image<float> input_(input_x, input_y, input_z, input_w);
+  Espresso::fill_random(input_, generator, 0.0f, 1.0f);
+
+  input.set(input_);
+
+  LOG(INFO) << input_;
+
+  return run_net(output_layer);
+}
+
+double test_ffnn(std::default_random_engine& generator,
     int n_input=5, int n_hidden=7, int n_classes=3) {
   // construct abstract network
   Halide::ImageParam input(Halide::type_of<float>(), 4);
@@ -113,16 +171,17 @@ double test_random(std::default_random_engine& generator,
   return run_net(layer2);
 }
 
-namespace Espresso {
-
 int test_main() {
   std::random_device rd;
   std::default_random_engine generator(rd());
 
-  test_random(generator);
   test_convolution(generator);
   test_pooling(generator);
   test_LRN(generator);
+  test_flatten(generator);
+  test_eltwise(generator);
+  test_concat(generator);
+  test_ffnn(generator);
   return 0;
 }
 
