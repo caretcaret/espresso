@@ -18,10 +18,11 @@ using std::unique_ptr;
 class Net {
 public:
     explicit Net(const NetParameter& param);
-    explicit Net(const string& filename);
+    explicit Net(const string& filename, bool binary=true);
+
+    string name;
 
 protected:
-    string name;
     vector<unique_ptr<Layer>> layers;
 
 

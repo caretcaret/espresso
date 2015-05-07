@@ -1,6 +1,7 @@
 build/*
 include/Halide*
 bin/*
+*.caffemodel
 
 # Dependency files
 *.d

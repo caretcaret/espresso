@@ -7,9 +7,14 @@ Net::Net(const NetParameter& param) {
     init(param);
 }
 
-Net::Net(const string& filename) {
+Net::Net(const string& filename, bool binary) {
     NetParameter param;
-    ReadNetParamsFromTextFile(filename, &param);
+
+    if (binary) {
+        ReadNetParamsFromBinaryFile(filename, &param);
+    } else {
+        ReadNetParamsFromTextFile(filename, &param);
+    }
     init(param);
 }
 

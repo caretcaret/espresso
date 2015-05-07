@@ -1,7 +1,6 @@
 #include <random>
 
 #include "espresso.h"
-#include "test_espresso.h"
 #include "CycleTimer.h"
 
 #include <glog/logging.h>

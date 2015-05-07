@@ -22,6 +22,9 @@ public:
 protected:
   /* Variables that are used everywhere */
   Halide::Var i, j, k, l;
+  std::vector<std::shared_ptr<Halide::Func> > parameters;
+  // used to denote uninitialized layer
+  Layer() : Layer(0, 0, 0, 0) {}
 };
 
 }

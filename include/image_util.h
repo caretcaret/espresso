@@ -6,6 +6,31 @@
 
 namespace Espresso {
 
+template<class T = float>
+Halide::Image<T> from_blob(const BlobProto& blob) {
+    const BlobShape& shape = blob.shape();
+    int num = shape.dim(0);
+    int channels = shape.dim(1);
+    int height = shape.dim(2);
+    int width = shape.dim(3);
+    int num_stride = channels * height * width;
+    int channels_stride = height * width;
+    int height_stride = width;
+    Halide::Image<T> arr = Halide::Image<T>(height, width, channels, num);
+
+    for (int l = 0; l < num; l++) {
+        for (int k = 0; k < channels; k++) {
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+                    arr(i, j, k, l) = blob.data(l * num_stride + k * channels_stride + j * height_stride + i);
+                }
+            }
+        }
+    }
+
+    return arr;
+}
+
 template<class T>
 Halide::Image<T>& fill_random(Halide::Image<T>& arr, std::default_random_engine& generator, T mean, T stddev) {
     int dim0 = arr.width();

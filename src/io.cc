@@ -70,6 +70,11 @@ void ReadNetParamsFromTextFile(const string& param_file, NetParameter* param) {
       << "Failed to parse NetParameter file: " << param_file;
 }
 
+void ReadNetParamsFromBinaryFile(const string& param_file, NetParameter *param) {
+  CHECK(ReadProtoFromBinaryFile(param_file, param))
+      << "Failed to parse NetParameter file: " << param_file;
+}
+
 void ReadSolverParamsFromTextFile(const string& param_file, SolverParameter* param) {
   CHECK(ReadProtoFromTextFile(param_file, param))
       << "Failed to parse SolverParams file: " << param_file;

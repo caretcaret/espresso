@@ -3,6 +3,7 @@
 
 #include "Halide.h"
 #include "layer.h"
+#include "image_util.h"
 #include "proto/caffe.pb.h"
 
 namespace Espresso {
@@ -45,7 +46,13 @@ public:
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
   }
 
-  Convolution(const LayerParameter& param) : Layer(1, 1, 1, 1) {
+  Convolution(const LayerParameter& param) : Layer() {
+    Halide::Image<float> kernel_ = Espresso::from_blob(param.blobs(0));
+    Halide::Image<float> bias_ = Espresso::from_blob(param.blobs(1));
+    Halide::Func kernel(kernel_);
+    Halide::Func bias(bias_);
+
+    // TODO move constructor body into init, call init with options
   }
 };
 

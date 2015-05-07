@@ -5,15 +5,12 @@
 
 
 int main(int argc, char **argv) {
-  google::InitGoogleLogging(argv[0]);
+  if (argc > 0) {
+    google::InitGoogleLogging(argv[0]);
+  }
 
-  Espresso::SolverParameter solve_params;
-  Espresso::NetParameter net_params;
-
-  ReadSolverParamsFromTextFile("./models/bvlc_reference_caffenet/solver.prototxt", &solve_params);
-  ReadNetParamsFromTextFile(solve_params.net(), &net_params);
-
-  std::cout << net_params.name() << std::endl;
+  Espresso::Net net("./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel");
+  std::cout << net.name << std::endl;
 
   Espresso::test_main();
 

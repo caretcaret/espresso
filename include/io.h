@@ -15,6 +15,7 @@ bool ReadProtoFromBinaryFile(const string& filename, Message* proto);
 void WriteProtoToBinaryFile(const Message& proto, const string& filename);
 
 void ReadNetParamsFromTextFile(const string& param_file, NetParameter* param);
+void ReadNetParamsFromBinaryFile(const string& param_file, NetParameter* param);
 void ReadSolverParamsFromTextFile(const string& param_file, SolverParameter* param);
 
 } //namespace Espresso

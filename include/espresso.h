@@ -9,5 +9,6 @@
 #include "layers_common.h"
 #include "layers_loss.h"
 #include "layers_vision.h"
+#include "net.h"
 
 #endif // ESPRESSO_ESPRESSO_H
