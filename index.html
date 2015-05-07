@@ -1,158 +1,133 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Espresso by jczhang</title>
+<!DOCTYPE html>
+<!--
+	Interphase by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Espresso</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-xlarge.css" />
+		</noscript>
+		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+	</head>
+	<body class="landing">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>Espresso</h1>
-        <p>Speeding up and debittering Caffe by adding Halide</p>
+		<!-- Header -->
+			<header id="header">
+				<h1><a href="index.html">Espresso</a></h1>
+				<nav id="nav">
+					<ul>
+						<li><a href="proposal.html">Proposal</a></li>
+						<li><a href="checkpoint.html">Checkpoint</a></li>
+					</ul>
+				</nav>
+			</header>
 
-        <p class="view"><a href="https://github.com/jczhang/espresso">View the Project on GitHub <small>jczhang/espresso</small></a></p>
+		<!-- Banner -->
+			<section id="banner">
+				<h2>Espresso</h2>
+				<p>Debittering and speeding up Caffe by adding Halide</p>
+				<ul class="actions">
+					<li>
+						<a href="https://www.github.com/jczhang/espresso" class="button big">View it on Github</a>
+					</li>
+				</ul>
+			</section>
 
+		<!-- One -->
+			<section id="one" class="wrapper style1 align-center">
+				<div class="container">
+					<header>
+						<h2>Summary</h2>
+						<p>Espresso is a partial implementation of Caffe in the Halide image processing language. It supports fine-tuning of deep neural networks to achieve high evaluation performance on multiple platforms.</p>
+					</header>
+					<div class="row 200%">
+						<section class="4u 12u$(small)">
+							<i class="icon big rounded fa-coffee"></i>
+							<p><a href="http://caffe.berkeleyvision.org/">Caffe</a> is a deep learning framework developed by the Berkeley Vision and Learning Center. It features GPU evaluation and training of convolutional neural networks with a clean interface. Models are described by configuration files and trained models can be exported.</p>
+						</section>
+						<section class="4u 12u$(small)">
+							<i class="icon big rounded fa-photo"></i>
+							<p><a href="http://halide-lang.org/">Halide</a> is an domain-specific language embedded in C++. It decouples algorithm implementations from scheduling and organization of computation, making it easier to optimize image processing pipelines for performance on multiple platforms.</p>
+						</section>
+						<section class="4u$ 12u$(small)">
+							<i class="icon big rounded fa-angle-double-right"></i>
+							<p><a href="https://github.com/jczhang/espresso">Espresso</a> is a deep learning framework implemented with the Halide language and philosophy in mind. We produce highly maintainable yet performant parallel code that is competitive with Caffe and works as a drop-in replacement for Caffe.</p>
+						</section>
+					</div>
+				</div>
+			</section>
 
-        <ul>
-          <li><a href="https://github.com/jczhang/espresso/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/jczhang/espresso/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/jczhang/espresso">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h1>
-<a id="espresso" class="anchor" href="#espresso" aria-hidden="true"><span class="octicon octicon-link"></span></a>Espresso</h1>
+		<!-- Two -->
+			<section id="writeup" class="wrapper style2 align-center">
+				<div class="container">
+					<header>
+						<h2>Writeup</h2>
+						<p>Friday, May 8, 2015</p>
+					</header>
+					<!--
+					<div class="row">
+						<section class="feature 6u 12u$(small)">
+							<img class="image fit" src="images/pic01.jpg" alt="" />
+							<h3 class="title">Lorem ipsum dolor</h3>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore ipsa voluptate, quae quibusdam. Doloremque similique, reiciendis sit quibusdam aperiam? Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+						</section>
+						<section class="feature 6u$ 12u$(small)">
+							<img class="image fit" src="images/pic02.jpg" alt="" />
+							<h3 class="title">Esse, fugiat, in</h3>
+							<p>Natus perspiciatis fugit illum porro iusto fuga nam voluptas minima voluptates deserunt, veniam reiciendis harum repellat necessitatibus. Animi, adipisci qui. Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+						</section>
+						<section class="feature 6u 12u$(small)">
+							<img class="image fit" src="images/pic03.jpg" alt="" />
+							<h3 class="title">Voluptates, repudiandae, dolor</h3>
+							<p>Voluptatibus repellendus tempora, quia! Consequuntur atque, rerum quis, ullam labore officiis ipsa beatae dolore, assumenda eos harum repudiandae, qui ab! Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+						</section>
+						<section class="feature 6u$ 12u$(small)">
+							<img class="image fit" src="images/pic04.jpg" alt="" />
+							<h3 class="title">Eveniet, reiciendis, veniam</h3>
+							<p>Rem nulla molestiae inventore quibusdam repudiandae doloremque eveniet ullam, qui autem possimus saepe laudantium numquam sapiente vel. Repudiandae, nihil tempore. Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+						</section>
+					</div>
+					-->
+				</div>
+			</section>
 
-<h2>
-<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project checkpoint</h2>
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="container">
+					<div class="row">
+						<section class="4u 6u(medium) 12u$(small)">
+							<h3>Made by</h3>
+							<p><a href="https://www.github.com/jczhang">Jeffrey Zhang</a> and <a href="https://www.github.com/iambald">Jeff Chen</a></p>						</section>
+						<section class="4u 6u$(medium) 12u$(small)">
 
-<h3>
-<a id="what-weve-accomplished-so-far" class="anchor" href="#what-weve-accomplished-so-far" aria-hidden="true"><span class="octicon octicon-link"></span></a>What we've accomplished so far</h3>
+							<h3>for</h3>
+							<p><a href="http://15418.courses.cs.cmu.edu/spring2015/home">the 15-418 Spring 2015 Parallelism Competition</a></p>
+						</section>
+						<section class="4u$ 12u$(medium) 12u$(small)">
+							<h3>with</h3>
+							<p>&hearts;</p>
+						</section>
+					</div>
+					<ul class="copyright">
+						<li>Design by <a href="http://templated.co">TEMPLATED</a></li>
+						<li>Images by <a href="http://unsplash.com">Unsplash</a></li>
+					</ul>
+				</div>
+			</footer>
 
-<p>The concerns we've raised in the project proposal describe skepticism about the capabilities of Halide and whether it would be able to evaluate neural networks, because Halide is a domain-specific language used for image processing. The first phase of our project was to scope out how feasible this task was.</p>
-
-<p>Up until now, we've created some starter code in Halide/C++ that is able to evaluate a simple feed-forward neural network without adding any specialized scheduling operations. This network is currently a toy network suitable for research and does not have the industrial strength to solve any classical machine learning problems. However, based on what we've learned about the capabilities of Halide, we expect to be able to implement a convolutional network in Halide capable of image recognition with no additional modifications to the Halide compiler.</p>
-
-<h3>
-<a id="recalibrating-our-goals-and-deliverables" class="anchor" href="#recalibrating-our-goals-and-deliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recalibrating our goals and deliverables</h3>
-
-<p>We also expect training neural networks to be possible, but the the tools provided by Halide may not be enough to do so efficiently. Our main source of friction for training is that training is an iterative process modifying large amounts of memory at a time. On the other hand, Halide seems only to be able to efficiently take in an input image and produce a single output image. This limitation can be overcome by writing host-side code and repeatedly copying buffers, but it is unclear how much slower this approach is than optimal.</p>
-
-<p>One concern expressed by course staff was that implementing Caffe-like behavior for our project would be a "bonus" and not a completely necessary task. However, we continue to express interest in such a feature because it would be useful in setting up, debugging, and optimizing real-world neural networks.</p>
-
-<p>We have completed one of our "plan to achieve" goals: Implement evaluation of a hard-coded neural network. Our stated goals remain feasible (or unnecessary, in the case of modifying Halide). However, we have decided to prioritize some goals over others in the interest of the Parallelism competition. Those goals are restated here:</p>
-
-<h4>
-<a id="plan-to-achieve" class="anchor" href="#plan-to-achieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Plan to achieve</h4>
-
-<ol>
-<li>[x] Explore Halide's capabilities by implementing evaluation of a simple hard-coded neural network. <del>If necessary, extend Halide with the appropriate functionality to enable neural network evaluation.</del>
-</li>
-<li>[ ] Implement evaluation of convolutional neural networks. <del>If necessary, extend Halide with functionality to enable convolutional neural networks.</del>
-</li>
-<li>[ ] Implement evaluation of neural networks constructed from parsing Caffe configuration files.</li>
-</ol>
-
-<h4>
-<a id="hope-to-achieve" class="anchor" href="#hope-to-achieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hope to achieve</h4>
-
-<ol>
-<li>[ ] Optimize the training and evaluation of neural networks to be competitive with Caffe.</li>
-<li>[ ] Implement training of a simple hard-coded neural network. If necessary, extend Halide with functionality to enable neural network training.</li>
-<li>[ ] Implement training of convolutional neural networks.</li>
-<li>[ ] Create a demo demonstrating real-time network evaluation.</li>
-</ol>
-
-<h4>
-<a id="stretch-goals" class="anchor" href="#stretch-goals" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stretch goals</h4>
-
-<ol>
-<li>[ ] Beat Caffe in a benchmark.</li>
-<li>[ ] Improve the debugging experience in Halide.</li>
-<li>[ ] Implement additional types of neural networks, such as <a href="http://arxiv.org/abs/1502.03167">batch normalization</a> or <a href="http://arxiv.org/abs/1502.01852">parameterized ReLUs</a>.</li>
-</ol>
-
-<h4>
-<a id="deliverables" class="anchor" href="#deliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deliverables</h4>
-
-<ol>
-<li>Presentation explaining the components of our system, placing emphasis on ease of use.</li>
-<li>Graphs demonstrating the efficiency of our project as compared to Caffe.</li>
-<li>A small demo demonstrating real-time network evaluation using our project.</li>
-</ol>
-
-<h3>
-<a id="detailed-schedule" class="anchor" href="#detailed-schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Detailed schedule</h3>
-
-<h4>
-<a id="week-2-tail-2015-apr-16---2015-apr-19" class="anchor" href="#week-2-tail-2015-apr-16---2015-apr-19" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 2-tail (2015 Apr 16 - 2015 Apr 19)</h4>
-
-<ul>
-<li>Explore the efficiency of training a simple hard-coded neural network. (jczhang)</li>
-<li>Perform preliminary optimization to understand Halide scheduling. (jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-3-head-2015-apr-20---2015-apr-22" class="anchor" href="#week-3-head-2015-apr-20---2015-apr-22" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 3-head (2015 Apr 20 - 2015 Apr 22)</h4>
-
-<ul>
-<li>Extend the hard-coded neural network with an implementation of convolutions. (jczhang)</li>
-<li>Explore the protocol buffer configuration files used by Caffe. (jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-3-tail-2015-apr-23---2015-apr-26" class="anchor" href="#week-3-tail-2015-apr-23---2015-apr-26" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 3-tail (2015 Apr 23 - 2015 Apr 26)</h4>
-
-<ul>
-<li>Implement infrastructure (the "glue") for neural network evaluation. (jczhang)</li>
-<li>Implement loading preconfigured neural networks in the Caffe format. (jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-4-head-2015-apr-27---2015-apr-29" class="anchor" href="#week-4-head-2015-apr-27---2015-apr-29" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 4-head (2015 Apr 27 - 2015 Apr 29)</h4>
-
-<ul>
-<li>Optimize the performance of evaluation of Caffe preconfigured networks by testing scheduling configurations. (jczhang, jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-4-tail-2015-apr-30---2015-may-3" class="anchor" href="#week-4-tail-2015-apr-30---2015-may-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 4-tail (2015 Apr 30 - 2015 May 3)</h4>
-
-<ul>
-<li>Implement training of convolutional neural networks. (jczhang)</li>
-<li>Continue optimizing performance of evaluation of networks. (jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-5-head-2015-may-4---2015-may-6" class="anchor" href="#week-5-head-2015-may-4---2015-may-6" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 5-head (2015 May 4 - 2015 May 6)</h4>
-
-<ul>
-<li>Finish incomplete code. (jczhang, jchen4)</li>
-<li>Collect data on performance benchmarks. (jczhang, jchen4)</li>
-</ul>
-
-<h4>
-<a id="week-5-tail-2015-may-7---2015-may-10" class="anchor" href="#week-5-tail-2015-may-7---2015-may-10" aria-hidden="true"><span class="octicon octicon-link"></span></a>Week 5-tail (2015 May 7 - 2015 May 10)</h4>
-
-<ul>
-<li>Finish incomplete code, or create a real-time application utilizing our project. (jczhang, jchen4)</li>
-<li>Finish demo for presentation day. (jczhang, jchen4)</li>
-</ul>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/jczhang">jczhang</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
-    
-  </body>
+	</body>
 </html>
