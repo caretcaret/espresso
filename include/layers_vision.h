@@ -1,6 +1,9 @@
 #ifndef ESPRESSO_COMPONENTS_H
 #define ESPRESSO_COMPONENTS_H
 
+#include <utility>
+#include <tuple>
+
 #include "Halide.h"
 #include "layer.h"
 #include "image_util.h"
@@ -12,14 +15,28 @@ namespace Espresso {
 /* Vision layers */
 /*****************/
 
+using dim4 = std::tuple<int, int, int, int>;
+
 class Convolution : public Layer {
 public:
-  Convolution(Layer input, Halide::Func kernel, int kernel_x, int kernel_y, int n_filters,
-      int pad_x=0, int pad_y=0, int stride_x=1, int stride_y=1, bool bias_term=true, int group=1)
-    : Layer((input.x + 2 * pad_x - kernel_x) / stride_x + 1,
-            (input.y + 2 * pad_y - kernel_y) / stride_y + 1,
-            n_filters,
-            input.w) {
+  template<typename... Args>
+  Convolution(Args&&... args) {
+    init(std::forward<Args>(args)...);
+  }
+
+  Convolution(const std::map<int, unique_ptr<Layer>>& layers, const LayerParameter& param) {
+    Halide::Image<float> kernel_ = Espresso::from_blob(param.blobs(0));
+    Halide::Image<float> bias_ = Espresso::from_blob(param.blobs(1));
+    Halide::Func kernel(kernel_);
+    Halide::Func bias(bias_);
+
+    // TODO: use ids to link layers together, save parameters
+    init();
+  }
+
+private:
+  void init(Layer input, Halide::Func kernel, int kernel_x, int kernel_y, int n_filters,
+      int pad_x=0, int pad_y=0, int stride_x=1, int stride_y=1, bool bias_term=true, int group=1) {
     // Kernel size is kernel_x by kernel_y by input.z / group by n_filters, where n_filters is the number of filters,
     // and +1 on input.z / group if bias is used; bias is stored at 0, 0, input.z / group for each filter.
     // kernel_x, kernel_y must be odd
@@ -44,16 +61,13 @@ public:
     }
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
+
+    set_dim((input.x + 2 * pad_x - kernel_x) / stride_x + 1,
+            (input.y + 2 * pad_y - kernel_y) / stride_y + 1,
+            n_filters,
+            input.w);
   }
 
-  Convolution(const LayerParameter& param) : Layer() {
-    Halide::Image<float> kernel_ = Espresso::from_blob(param.blobs(0));
-    Halide::Image<float> bias_ = Espresso::from_blob(param.blobs(1));
-    Halide::Func kernel(kernel_);
-    Halide::Func bias(bias_);
-
-    // TODO move constructor body into init, call init with options
-  }
 };
 
 

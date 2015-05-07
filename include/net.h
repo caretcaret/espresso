@@ -12,7 +12,7 @@ namespace Espresso {
 
 using std::string;
 using std::tuple;
-using std::vector;
+using std::map;
 using std::unique_ptr;
 
 class Net {
@@ -23,11 +23,11 @@ public:
     string name;
 
 protected:
-    vector<unique_ptr<Layer>> layers;
+    map<int, unique_ptr<Layer>> layers;
 
 
 private:
-    void init(const NetParameter& param);
+    void init(const map<int, unique_ptr<Layer>>& layers, const NetParameter& param);
 };
 
 } // namespace Espresso
