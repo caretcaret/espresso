@@ -36,14 +36,26 @@ public:
     padded(i, j, k, l) = 0.0f;
     padded((2 * pad_x + 1) * s.x, (2 * pad_y + 1) * s.y, k, l) = input.forward(s.x, s.y, k, l);
 
-    convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
     if (bias_term) {
       bias(k) = kernel(0, 0, input_group_size, group_num * output_group_size + group_idx);
-      convolved(i, j, k, l) += bias(k);
     }
 
+    convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));// + bias(k);
+
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
+
+    // int a = -1;
+
+    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
+    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
+    forward.unroll(i_inner).unroll(j_inner);
+    forward.fuse(i_outer, j_outer, tile_index);
+    forward.parallel(tile_index);
+
+    // convolved.compute_root();
+
+    // convolved.trace_stores();
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -87,6 +99,11 @@ public:
     }
 
     forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
+
+    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 8, 8);
+    // forward.unroll(i_inner).unroll(j_inner);
+    // forward.fuse(i_outer, j_outer, tile_index);
+    // forward.parallel(tile_index);
   }
 };
 
