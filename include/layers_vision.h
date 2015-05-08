@@ -83,7 +83,6 @@ public:
     Halide::Func pooled("pooled");
     Halide::Func rand_x, rand_y;
     Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
-    Halide::RDom s(0, input.x, 0, input.y);
 
     padded(i, j, k, l) = Halide::select(
         (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
@@ -104,10 +103,12 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
 
-    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 8, 8);
-    // forward.unroll(i_inner).unroll(j_inner);
-    // forward.fuse(i_outer, j_outer, tile_index);
-    // forward.parallel(tile_index);
+    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
+    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
+    forward.unroll(i_inner).unroll(j_inner);
+    forward.fuse(i_outer, j_outer, tile_index);
+    forward.parallel(tile_index);
+    forward.compute_root();
   }
 };
 
@@ -116,18 +117,28 @@ public:
   LRN(Layer input, int region_x=1, int region_y=1, int region_z=1, float alpha=1.0f, float beta=5.0f)
     : Layer(input.x, input.y, input.z, input.w) {
     // across_channels => region_x and region_y = 1; within_channels => region_z = 1
+    Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y, 0, input.z);
     Halide::Func activation("activation");
     Halide::Func normalizer("normalizer");
-    Halide::Func padded("padded");
     Halide::RDom r(-region_x / 2, region_x / 2 + 1, -region_y / 2, region_y / 2 + 1, -region_z / 2, region_z / 2 + 1);
-    Halide::RDom s(0, input.x, 0, input.y, 0, input.z);
 
-    padded(i, j, k, l) = 0.0f;
-    padded(s.x, s.y, s.z, l) = input.forward(s.x, s.y, s.z, l);
-
-    activation(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, k + r.z, l));
+    activation(i, j, k, l) = Halide::sum(clamped(i + r.x, j + r.y, k + r.z, l));
     normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
     forward(i, j, k, l) = activation(i, j, k, l) / normalizer(i, j, k, l);
+
+    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
+    activation.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
+    activation.unroll(i_inner).unroll(j_inner);
+    activation.fuse(i_outer, j_outer, tile_index);
+    activation.parallel(tile_index);
+    activation.compute_root();
+
+    Halide::Var i_inner2, i_outer2, j_inner2, j_outer2, tile_index2;
+    forward.tile(i, j, i_outer2, j_outer2, i_inner2, j_inner2, 4, 4);
+    forward.unroll(i_inner2).unroll(j_inner2);
+    forward.fuse(i_outer2, j_outer2, tile_index2);
+    forward.parallel(tile_index2);
+    forward.compute_root();
   }
 };
 

@@ -35,11 +35,21 @@ public:
     Halide::RDom r(0, input.x);
     Halide::Func bias("bias");
 
-    forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     if (bias_term) {
       bias(i) = W(i, input.x);
-      forward(i, j, k, l) += bias(i);
+      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l)) + bias(i);
+    } else {
+      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     }
+
+    forward.parallel(k).parallel(l);
+    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
+    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
+    // forward.unroll(i_inner).unroll(j_inner);
+    // forward.fuse(i_outer, j_outer, tile_index);
+    // forward.parallel(tile_index);
+    forward.compute_root();
+
   }
 };
 
