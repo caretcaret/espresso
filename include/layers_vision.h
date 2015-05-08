@@ -43,7 +43,7 @@ public:
     }
 
     convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));// + bias(k);
+        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
 
@@ -54,8 +54,7 @@ public:
     forward.unroll(i_inner).unroll(j_inner);
     forward.fuse(i_outer, j_outer, tile_index);
     forward.parallel(tile_index);
-
-    // convolved.compute_root();
+    forward.compute_root();
 
     // convolved.trace_stores();
   }
