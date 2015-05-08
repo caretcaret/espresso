@@ -25,6 +25,98 @@ double run_net(Espresso::Layer output_layer) {
   return end_time - start_time;
 }
 
+// yolohack lol
+Layer bvlc_reference_caffenet(std::default_random_engine& generator, Halide::ImageParam input_data, Halide::ImageParam input_labels) {
+  Espresso::Layer data = Espresso::MemoryData(input_data, 227, 227, 3, 50);
+  Espresso::Layer labels = Espresso::MemoryData(input_labels, 1, 1, 1, 50);
+
+  int conv1_filters = 96, conv1_size = 11, conv1_stride = 4;
+  Halide::ImageParam kernel1(Halide::type_of<float>(), 4);
+  kernel1.set(Espresso::fill_random(Halide::Image<float>(conv1_size, conv1_size, data.z+1, conv1_filters), generator, 0.0f, 0.01f));
+  Espresso::Layer conv1 = Espresso::Convolution(data, Halide::Func(kernel1), conv1_size, conv1_size, conv1_filters, 0, 0, conv1_stride, conv1_stride);
+
+  Espresso::Layer relu1 = Espresso::ReLU(conv1);
+
+  int pool1_size = 3, pool1_stride = 2;
+  Espresso::Layer pool1 = Espresso::Pooling(relu1, "max", pool1_size, pool1_size, 0, 0, pool1_stride, pool1_stride);
+
+  int norm1_size = 5;
+  float norm1_alpha = 0.0001f, norm1_beta = 0.75f;
+  Espresso::Layer norm1 = Espresso::LRN(pool1, 1, 1, norm1_size, norm1_alpha, norm1_beta);
+
+  int conv2_filters = 256, conv2_pad = 2, conv2_size = 5, conv2_group = 2;
+  Halide::ImageParam kernel2(Halide::type_of<float>(), 4);
+  kernel2.set(Espresso::fill_random(Halide::Image<float>(conv2_size, conv2_size, norm1.z+1, conv2_filters), generator, 0.0f, 0.01f));
+  Espresso::Layer conv2 = Espresso::Convolution(norm1, Halide::Func(kernel2), conv2_size, conv2_size, conv2_filters, conv2_pad, conv2_pad, 1, 1, conv2_group);
+
+  Espresso::Layer relu2 = Espresso::ReLU(conv2);
+
+  int pool2_size = 3, pool2_stride = 2;
+  Espresso::Layer pool2 = Espresso::Pooling(relu2, "max", pool2_size, pool2_size, 0, 0, pool2_stride, pool2_stride);
+
+  int norm2_size = 5;
+  float norm2_alpha = 0.0001f, norm2_beta = 0.75f;
+  Espresso::Layer norm2 = Espresso::LRN(pool2, 1, 1, norm2_size, norm2_alpha, norm2_beta);
+
+  int conv3_filters = 384, conv3_pad = 1, conv3_size = 3;
+  Halide::ImageParam kernel3(Halide::type_of<float>(), 4);
+  kernel3.set(Espresso::fill_random(Halide::Image<float>(conv3_size, conv3_size, norm2.z+1, conv3_filters), generator, 0.0f, 0.01f));
+  Espresso::Layer conv3 = Espresso::Convolution(norm2, Halide::Func(kernel3), conv3_size, conv3_size, conv3_filters, conv3_pad, conv3_pad);
+
+  Espresso::Layer relu3 = Espresso::ReLU(conv3);
+
+  int conv4_filters = 384, conv4_pad = 1, conv4_size = 3, conv4_group = 2;
+  Halide::ImageParam kernel4(Halide::type_of<float>(), 4);
+  kernel4.set(Espresso::fill_random(Halide::Image<float>(conv4_size, conv4_size, relu3.z+1, conv4_filters), generator, 0.0f, 0.01f));
+  Espresso::Layer conv4 = Espresso::Convolution(relu3, Halide::Func(kernel4), conv4_size, conv4_size, conv4_filters, conv4_pad, conv4_pad, 1, 1, conv4_group);
+
+  Espresso::Layer relu4 = Espresso::ReLU(conv4);
+
+  int conv5_filters = 256, conv5_pad = 1, conv5_size = 3, conv5_group = 2;
+  Halide::ImageParam kernel5(Halide::type_of<float>(), 4);
+  kernel5.set(Espresso::fill_random(Halide::Image<float>(conv5_size, conv5_size, relu4.z+1, conv5_filters), generator, 0.0f, 0.01f));
+  Espresso::Layer conv5 = Espresso::Convolution(relu4, Halide::Func(kernel5), conv5_size, conv5_size, conv5_filters, conv5_pad, conv5_pad, 1, 1, conv5_group);
+
+  Espresso::Layer relu5 = Espresso::ReLU(conv5);
+
+  int pool5_size = 3, pool5_stride = 2;
+  Espresso::Layer pool5 = Espresso::Pooling(relu5, "max", pool5_size, pool5_size, 0, 0, pool5_stride, pool5_stride);
+
+  // TODO: revisit InnerProduct to implicitly flatten
+  Espresso::Layer flatten5 = Espresso::Flatten(pool5);
+  LOG(INFO) << "flatten5 dims: " << flatten5.x << " " << flatten5.y << " " << flatten5.z << " " << flatten5.w;
+
+  int fc6_size = 4096;
+  Halide::ImageParam W6(Halide::type_of<float>(), 2);
+  W6.set(Espresso::fill_random(Halide::Image<float>(fc6_size, flatten5.x+1), generator, 0.0f, 0.005f));
+  Espresso::Layer fc6 = Espresso::InnerProduct(flatten5, Halide::Func(W6), fc6_size);
+
+  Espresso::Layer relu6 = Espresso::ReLU(fc6);
+
+  Espresso::Layer drop6 = Espresso::Dropout(relu6);
+
+  int fc7_size = 4096;
+  Halide::ImageParam W7(Halide::type_of<float>(), 2);
+  W7.set(Espresso::fill_random(Halide::Image<float>(fc7_size, drop6.x+1), generator, 0.0f, 0.005f));
+  Espresso::Layer fc7 = Espresso::InnerProduct(drop6, Halide::Func(W7), fc7_size);
+
+  Espresso::Layer relu7 = Espresso::ReLU(fc7);
+
+  Espresso::Layer drop7 = Espresso::Dropout(relu7);
+
+  int fc8_size = 1000;
+  Halide::ImageParam W8(Halide::type_of<float>(), 2);
+  W8.set(Espresso::fill_random(Halide::Image<float>(fc8_size, drop7.x+1), generator, 0.0f, 0.01f));
+  Espresso::Layer fc8 = Espresso::InnerProduct(drop7, Halide::Func(W8), fc8_size);
+
+  Espresso::Layer accuracy = Espresso::Accuracy(fc8, labels);
+
+  Espresso::Layer softmax = Espresso::Softmax(fc8);
+  Espresso::Layer loss = Espresso::MultinomialLogisticLoss(softmax, labels);
+
+  return softmax; // screw it not returning loss/accuracy atm
+}
+
 double test_convolution(std::default_random_engine& generator,
     int input_x=256, int input_y=256, int input_z=4, int input_w=2, int kernel_x=5, int kernel_y=5, int n_filters=8,
     int pad_x=2, int pad_y=2, int stride_x=3, int stride_y=3, bool bias_term=true, int group=2) {
@@ -174,13 +266,20 @@ int test_main() {
   std::random_device rd;
   std::default_random_engine generator(rd());
 
-  test_convolution(generator);
-  test_pooling(generator);
-  test_LRN(generator);
-  test_flatten(generator);
-  test_eltwise(generator);
-  test_concat(generator);
-  test_ffnn(generator);
+  Halide::ImageParam input_data(Halide::type_of<float>(), 4);
+  Halide::ImageParam input_labels(Halide::type_of<int>(), 4);
+  input_data.set(Espresso::fill_random(Halide::Image<float>(227, 227, 3, 50), generator, 0.0f, 42.0f)); // I think it uses [0, 255] offset by mean
+  input_labels.set(Espresso::fill_random(Halide::Image<int>(1, 1, 1, 50), generator, 500, 166)); // too lazy to initialize properly
+  Espresso::Layer net = bvlc_reference_caffenet(generator, input_data, input_labels);
+
+  run_net(net);
+  // test_convolution(generator);
+  // test_pooling(generator);
+  // test_LRN(generator);
+  // test_flatten(generator);
+  // test_eltwise(generator);
+  // test_concat(generator);
+  // test_ffnn(generator);
   return 0;
 }
 

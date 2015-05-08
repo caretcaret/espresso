@@ -32,7 +32,7 @@ Halide::Image<T> from_blob(const BlobProto& blob) {
 }
 
 template<class T>
-Halide::Image<T>& fill_random(Halide::Image<T>& arr, std::default_random_engine& generator, T mean, T stddev) {
+Halide::Image<T> fill_random(Halide::Image<T> arr, std::default_random_engine& generator, T mean, T stddev) {
     int dim0 = arr.width();
     int dim1 = arr.height();
     int dim2 = arr.channels();

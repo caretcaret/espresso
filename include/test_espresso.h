@@ -4,6 +4,7 @@
 namespace Espresso {
 
 int test_main();
+Layer bvlc_reference_caffenet();
 
 } // namespace Espresso
 

@@ -20,7 +20,7 @@ CXXFLAGS= -O2 -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS))
 LDFLAGS = $(LIBDIRS) $(LIBS)
 
 
-.PHONY: clean build proto prebuild run clean
+.PHONY: clean build proto prebuild run clean debug
 
 all: prebuild proto
 	@$(MAKE) -s espresso
@@ -34,6 +34,8 @@ proto: prebuild
 	@$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 run: all
 	@build/espresso
+debug: all
+	@GLOG_logtostderr=1 build/espresso
 clean:
 	@-rm -rf src/*.d src/*.o build
 
