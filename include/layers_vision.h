@@ -25,16 +25,18 @@ public:
     // kernel_x, kernel_y must be odd
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
+    Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
     Halide::Func padded("padded");
     Halide::Func convolved("convolved");
     Halide::Func bias("bias");
     Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
-    Halide::RDom s(0, input.x, 0, input.y);
     Halide::Expr group_num = k / output_group_size;
     Halide::Expr group_idx = k % output_group_size;
 
-    padded(i, j, k, l) = 0.0f;
-    padded((2 * pad_x + 1) * s.x, (2 * pad_y + 1) * s.y, k, l) = input.forward(s.x, s.y, k, l);
+    padded(i, j, k, l) = Halide::select(
+        (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
+        clamped(i / (2 * pad_x + 1), j / (2 * pad_y + 1), k, l),
+        0.0f);
 
     if (bias_term) {
       bias(k) = kernel(0, 0, input_group_size, group_num * output_group_size + group_idx);
@@ -77,14 +79,17 @@ public:
             (input.y + 2 * pad_y - pool_y) / stride_y + 1,
             input.z,
             input.w) {
+    Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
     Halide::Func padded("padded");
     Halide::Func pooled("pooled");
     Halide::Func rand_x, rand_y;
     Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
     Halide::RDom s(0, input.x, 0, input.y);
 
-    padded(i, j, k, l) = 0.0f;
-    padded((2 * pad_x + 1) * s.x, (2 * pad_y + 1) * s.y, k, l) = input.forward(s.x, s.y, k, l);
+    padded(i, j, k, l) = Halide::select(
+        (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
+        clamped(i / (2 * pad_x + 1), j / (2 * pad_y + 1), k, l),
+        0.0f);
 
     if (method == "max") {
       pooled(i, j, k, l) = Halide::maximum(padded(i + r.x, j + r.y, k, l));

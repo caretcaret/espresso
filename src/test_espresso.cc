@@ -26,7 +26,7 @@ double run_net(Espresso::Layer output_layer) {
 }
 
 double test_convolution(std::default_random_engine& generator,
-    int input_x=16, int input_y=32, int input_z=4, int input_w=2, int kernel_x=5, int kernel_y=5, int n_filters=8,
+    int input_x=256, int input_y=256, int input_z=4, int input_w=2, int kernel_x=5, int kernel_y=5, int n_filters=8,
     int pad_x=2, int pad_y=2, int stride_x=3, int stride_y=3, bool bias_term=true, int group=2) {
   Halide::ImageParam input(Halide::type_of<float>(), 4);
   Halide::ImageParam kernel(Halide::type_of<float>(), 4);
@@ -51,7 +51,7 @@ double test_convolution(std::default_random_engine& generator,
 }
 
 double test_pooling(std::default_random_engine& generator,
-    std::string method="max", int input_x=16, int input_y=32, int input_z=3, int input_w=2, int pool_x=5, int pool_y=5,
+    std::string method="max", int input_x=256, int input_y=256, int input_z=3, int input_w=2, int pool_x=5, int pool_y=5,
     int pad_x=0, int pad_y=0, int stride_x=1, int stride_y=1) {
   Halide::ImageParam input(Halide::type_of<float>(), 4);
 
