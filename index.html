@@ -276,12 +276,13 @@ output.tile(i, j,
               <!--<img class="image fit" src="images/pic03.jpg" alt="" />-->
 							<h3 class="title">Preliminary results</h3>
               <p>We have found that Halide is sufficiently expressive enough for neural network implementation without additional modifications to the Halide compiler. Up to now, we've reimplemented most of the Caffe layers in Halide and can load them from Caffe configuration files.</p>
-              <p>We are able to run Caffe's reference network end-to-end on the GPU, achieving over 100x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 400 ms. We're still working on many more optimizations to push that number down.</p>
+              <p>We are able to run Caffe's reference network end-to-end on the CPU and GPU, achieving over 320x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 400 ms (slower due to memory issues; we're still working on that). We have ideas for many more optimizations that will help us push that number down to the sub-10 ms range.</p>
+              <p>Timing individual layers on the GPU vs the CPU, we achieve a 2x speedup on convolutional layers, 8x speedup on pooling layers, and 9x speedup on local region normalization.</p>
 						</section>
 						<section class="feature 6u$ 12u$(small)">
               <img class="image fit" src="images/dnn.png" alt="" />
 							<h3 class="title">Final results to be shown</h3>
-              <p>On Monday, May 11, 2015, we'll show performance results competitive with Caffe and <a href="https://github.com/soumith/convnet-benchmarks">other benchmarks</a>. We'll give a demo that shows Espresso's user-friendliness in applications, development, and research. We'll explain the challenges of competing with existing GPU deep learning implementations and the gotchas of writing parallel neural network code in Halide.</p>
+              <p>On Monday, May 11, 2015, we'll give a presentation that demonstrates performance results competitive with Caffe and <a href="https://github.com/soumith/convnet-benchmarks">other benchmarks</a>. We'll give a demo that shows Espresso's user-friendliness in applications, development, and research. We'll also explain the challenges of competing with existing GPU deep learning implementations and the gotchas of writing parallel neural network code in Halide.</p>
 						</section>
 					</div>
 				</div>
