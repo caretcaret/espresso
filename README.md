@@ -1,8 +1,11 @@
 # espresso
 Speeding up and debittering Caffe by adding Halide
 
+[Website](http://jczhang.github.io/espresso/)
+
 [Proposal](http://jczhang.github.io/espresso/proposal.html)
-[Progress report](http://jczhang.github.io/espresso/)
+
+[Progress report](http://jczhang.github.io/espresso/checkpoint.html)
 
 ## Build instructions
-Download [Halide binaries](https://github.com/halide/Halide/releases), drop the bin/ and include/ directory into here, then make. clang suggested.
+Install [glog](https://code.google.com/p/google-glog/), [protobuf](https://github.com/google/protobuf), [Halide](https://github.com/halide/Halide/releases), then make. clang recommended.
