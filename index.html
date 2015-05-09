@@ -215,7 +215,8 @@ pre .il { color: #40a070 } /* Literal.Number.Integer.Long */.syntax pre .hll { b
 					</header>
 					<div class="row">
 						<section class="feature 6u 12u$(small)">
-<div class="syntax">
+							<h3 class="title">Halide algorithm</h3>
+              <div class="syntax">
 <pre style="text-align: left; padding: 1em;"><span class="n">Var</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">;</span>
 <span class="n">RDom</span> <span class="nf">r</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">);</span>
 
@@ -227,8 +228,7 @@ pre .il { color: #40a070 } /* Literal.Number.Integer.Long */.syntax pre .hll { b
   <span class="n">sum</span><span class="p">(</span><span class="n">clamped</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">r</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="n">r</span><span class="p">.</span><span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="n">kernel</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">y</span><span class="p">));</span> 
 </pre>
 </div>
-							<h3 class="title">Halide algorithm</h3>
-              <p>This snippet of Halide code describes a simplified convolutional layer with an input image and a kernel. Notice that it follows the mathematical definition of the convolution very closely: \[ (I * K)[i, j] = \sum_m \sum_n I[i-m, j-n]K[m, n] \]</p>
+              <p>This snippet of Halide code cleanly describes a simplified convolutional layer with an input image and a kernel. Notice that it follows the mathematical definition of the convolution very closely: \[ (I * K)[i, j] = \sum_m \sum_n I[i-m, j-n]K[m, n] \]</p>
 <!--
               <pre style="text-align: left">
 Var i, j, k, l;
@@ -244,7 +244,9 @@ Func output(i, j) =
 -->
 						</section>
 						<section class="feature 6u$ 12u$(small)">
-<div class="syntax">
+
+							<h3 class="title">Halide scheduling</h3>
+              <div class="syntax">
 <pre style="text-align: left; padding: 1em;"><span class="n">Var</span> <span class="n">i_inner</span><span class="p">,</span> <span class="n">i_outer</span><span class="p">,</span> <span class="n">j_inner</span><span class="p">,</span> <span class="n">j_outer</span><span class="p">,</span> <span class="n">tile_index</span><span class="p">;</span>
 <span class="n">output</span><span class="p">.</span><span class="n">tile</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span>
         <span class="n">i_outer</span><span class="p">,</span> <span class="n">j_outer</span><span class="p">,</span>
@@ -255,9 +257,8 @@ Func output(i, j) =
   <span class="p">.</span><span class="n">parallel</span><span class="p">(</span><span class="n">tile_index</span><span class="p">)</span>
   <span class="p">.</span><span class="n">compute_root</span><span class="p">();</span>
 </pre>
-</div>
-							<h3 class="title">Halide scheduling</h3>
               <p>This snippet of Halide code describes the allocation of computational resources of the algorithm. Modifying the scheduling to target different architectures will not affect the correctness of the code. Notice that this code splits the output into $4 \times 4$ tiles, unrolls an inner loop computing those tiles, and creates an outer loop indexed by <code>tile_index</code>, which runs in parallel and stores computations to memory.</p>
+</div>
 <!--
 <pre style="text-align: left">
 Var i_inner, i_outer, j_inner, j_outer, tile_index;
@@ -274,15 +275,15 @@ output.tile(i, j,
 						</section>
 						<section class="feature 6u 12u$(small)">
               <!--<img class="image fit" src="images/pic03.jpg" alt="" />-->
-							<h3 class="title">Preliminary results</h3>
+							<h3 class="title">Preliminary performance results</h3>
               <p>We have found that Halide is sufficiently expressive enough for neural network implementation without additional modifications to the Halide compiler. Up to now, we've reimplemented most of the Caffe layers in Halide and can load them from Caffe configuration files.</p>
               <p>We are able to run Caffe's reference network end-to-end on the CPU and GPU, achieving over 320x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 400 ms (slower due to memory issues; we're still working on that). We have ideas for many more optimizations that will help us push that number down to the sub-10 ms range.</p>
               <p>Timing individual layers on the GPU vs the CPU, we achieve a 2x speedup on convolutional layers, 8x speedup on pooling layers, and 9x speedup on local region normalization.</p>
 						</section>
 						<section class="feature 6u$ 12u$(small)">
-              <img class="image fit" src="images/dnn.png" alt="" />
 							<h3 class="title">Final results to be shown</h3>
               <p>On Monday, May 11, 2015, we'll give a presentation that demonstrates performance results competitive with Caffe and <a href="https://github.com/soumith/convnet-benchmarks">other benchmarks</a>. We'll give a demo that shows Espresso's user-friendliness in applications, development, and research. We'll also explain the challenges of competing with existing GPU deep learning implementations and the gotchas of writing parallel neural network code in Halide.</p>
+              <img class="image fit" src="images/dnn.png" alt="" />
 						</section>
 					</div>
 				</div>
