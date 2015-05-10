@@ -26,12 +26,9 @@ public:
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
     Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
-    Halide::Func padded("padded");
-    Halide::Func convolved("convolved");
-    Halide::Func bias("bias");
+    Halide::Func padded("padded"), convolved("convolved"), bias("bias");
     Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
-    Halide::Expr group_num = k / output_group_size;
-    Halide::Expr group_idx = k % output_group_size;
+    Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
 
     padded(i, j, k, l) = Halide::select(
         (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
@@ -47,16 +44,8 @@ public:
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
 
-    // int a = -1;
-
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    forward.unroll(i_inner).unroll(j_inner);
-    forward.fuse(i_outer, j_outer, tile_index);
-    forward.parallel(tile_index);
-    forward.compute_root();
-
-    // convolved.trace_stores();
+    // convolved.compute_at(forward, Halide::Var::gpu_blocks());
+    forward.gpu_tile(i, j, 16, 16).compute_root();
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -103,12 +92,15 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
 
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    forward.unroll(i_inner).unroll(j_inner);
-    forward.fuse(i_outer, j_outer, tile_index);
-    forward.parallel(tile_index);
+    forward.gpu_tile(i, j, 16, 16);
     forward.compute_root();
+
+    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
+    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
+    // forward.unroll(i_inner).unroll(j_inner);
+    // forward.fuse(i_outer, j_outer, tile_index);
+    // forward.parallel(tile_index);
+    // forward.compute_root();
   }
 };
 
@@ -126,18 +118,18 @@ public:
     normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
     forward(i, j, k, l) = activation(i, j, k, l) / normalizer(i, j, k, l);
 
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    activation.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    activation.unroll(i_inner).unroll(j_inner);
-    activation.fuse(i_outer, j_outer, tile_index);
-    activation.parallel(tile_index);
-    activation.compute_root();
+    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
 
-    Halide::Var i_inner2, i_outer2, j_inner2, j_outer2, tile_index2;
-    forward.tile(i, j, i_outer2, j_outer2, i_inner2, j_inner2, 4, 4);
-    forward.unroll(i_inner2).unroll(j_inner2);
-    forward.fuse(i_outer2, j_outer2, tile_index2);
-    forward.parallel(tile_index2);
+    // Halide::Var i_inner2, i_outer2, j_inner2, j_outer2, tile_index2;
+    // forward.tile(i, j, i_outer2, j_outer2, i_inner2, j_inner2, 4, 4);
+    // forward.unroll(i_inner2).unroll(j_inner2);
+    // forward.fuse(i_outer2, j_outer2, tile_index2);
+    // forward.parallel(tile_index2);
+    // forward.compute_root();
+
+    // activation.compute_at(forward, tile_index2);
+
+    forward.gpu_tile(i, j, 16, 16);
     forward.compute_root();
   }
 };

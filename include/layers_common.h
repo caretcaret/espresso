@@ -42,12 +42,7 @@ public:
       forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     }
 
-    forward.parallel(k).parallel(l);
-    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    // forward.unroll(i_inner).unroll(j_inner);
-    // forward.fuse(i_outer, j_outer, tile_index);
-    // forward.parallel(tile_index);
+    forward.vectorize(i, 8).parallel(k).parallel(l);
     forward.compute_root();
 
   }
@@ -113,6 +108,10 @@ public:
     } else {
       throw new std::invalid_argument("Operation not supported in Eltwise");
     }
+
+    forward.gpu_tile(i, j, 16, 16);
+    forward.compute_root();
+
   }
 };
 
