@@ -27,19 +27,17 @@ public:
 
 class InnerProduct : public Layer {
 public:
-  /* W: output_x * (input.x + 1), where the last column is the bias
-   * or W: output_x * input.x for no bias term */
+  /* W: output_x * input.x * 1 * 1
+   * bias: output_x * 1 * 1 * 1 */
   /* TODO: use blas gemv/gemm */
-  InnerProduct(Layer input, Halide::Func W, int output_x, bool bias_term=true)
+  InnerProduct(Layer input, Halide::Func W, Halide::Func bias, int output_x, bool bias_term=true)
     : Layer(output_x, input.y, input.z, input.w) {
     Halide::RDom r(0, input.x);
-    Halide::Func bias("bias");
 
     if (bias_term) {
-      bias(i) = W(i, input.x);
-      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l)) + bias(i);
+      forward(i, j, k, l) = Halide::sum(W(r.x, i, 0, 0) * input.forward(r.x, j, k, l)) + bias(i, 0, 0, 0);
     } else {
-      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
+      forward(i, j, k, l) = Halide::sum(W(r.x, i, 0, 0) * input.forward(r.x, j, k, l));
     }
 
     forward.vectorize(i, 8).parallel(k).parallel(l);

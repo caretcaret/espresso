@@ -3,16 +3,17 @@
 
 #include "Halide.h"
 #include <random>
+#include <glog/logging.h>
 
 namespace Espresso {
 
 template<class T = float>
 Halide::Image<T> from_blob(const BlobProto& blob) {
-    const BlobShape& shape = blob.shape();
-    int num = shape.dim(0);
-    int channels = shape.dim(1);
-    int height = shape.dim(2);
-    int width = shape.dim(3);
+    int num = blob.has_num() ? blob.num() : 1;
+    int channels = blob.has_channels() ? blob.channels() : 1;
+    int height = blob.has_height() ? blob.height() : 1;
+    int width = blob.has_width() ? blob.width() : 1;
+    LOG(INFO) << width << " " << height << " " << channels << " " << num;
     int num_stride = channels * height * width;
     int channels_stride = height * width;
     int height_stride = width;

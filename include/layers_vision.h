@@ -14,19 +14,19 @@ namespace Espresso {
 
 class Convolution : public Layer {
 public:
-  Convolution(Layer input, Halide::Func kernel, int kernel_x, int kernel_y, int n_filters,
+  Convolution(Layer input, Halide::Func kernel, Halide::Func bias, int kernel_x, int kernel_y, int n_filters,
       int pad_x=0, int pad_y=0, int stride_x=1, int stride_y=1, bool bias_term=true, int group=1)
     : Layer((input.x + 2 * pad_x - kernel_x) / stride_x + 1,
             (input.y + 2 * pad_y - kernel_y) / stride_y + 1,
             n_filters,
             input.w) {
-    // Kernel size is kernel_x by kernel_y by input.z / group by n_filters, where n_filters is the number of filters,
-    // and +1 on input.z / group if bias is used; bias is stored at 0, 0, input.z / group for each filter.
+    // Kernel size is kernel_x by kernel_y by input.z / group by n_filters, where n_filters is the number of filters
+    // Bias size is n_filters by 1 by 1 by 1
     // kernel_x, kernel_y must be odd
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
     Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
-    Halide::Func padded("padded"), convolved("convolved"), bias("bias");
+    Halide::Func padded("padded"), convolved("convolved");
     Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
     Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
 
@@ -36,11 +36,12 @@ public:
         0.0f);
 
     if (bias_term) {
-      bias(k) = kernel(0, 0, input_group_size, group_num * output_group_size + group_idx);
+      convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k, 0, 0, 0);
+    } else {
+      convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
     }
-
-    convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-        kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
 
