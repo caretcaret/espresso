@@ -277,7 +277,7 @@ output.tile(i, j,
               <!--<img class="image fit" src="images/pic03.jpg" alt="" />-->
 							<h3 class="title">Preliminary performance results</h3>
               <p>We have found that Halide is sufficiently expressive enough for neural network implementation without additional modifications to the Halide compiler. Up to now, we've reimplemented most of the Caffe layers in Halide and can load them from Caffe configuration files.</p>
-              <p>We are able to run Caffe's reference network end-to-end on the CPU and GPU, achieving over 320x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 400 ms (slower due to memory issues; we're still working on that). We have ideas for many more optimizations that will help us push that number down to the sub-10 ms range.</p>
+              <p>We are able to run Caffe's reference AlexNet network end-to-end on the CPU and GPU, achieving over 320x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 190 ms, with batch size 20. For comparison, Caffe's GPU implementation on GTX 770 can evaluate an image in 2.58 ms, with batch size 50. We have ideas for many more optimizations that will help us push that number down to the sub-10 ms range.</p>
               <p>Timing individual layers on the GPU vs the CPU, we achieve a 2x speedup on convolutional layers, 8x speedup on pooling layers, and 9x speedup on local region normalization.</p>
 						</section>
 						<section class="feature 6u$ 12u$(small)">
