@@ -80,19 +80,19 @@ void ReadSolverParamsFromTextFile(const string& param_file, SolverParameter* par
       << "Failed to parse SolverParams file: " << param_file;
 }
 
-// Do the file extension and encoding match?
-static bool matchExt(const std::string & fn,
-                     std::string en) {
-  size_t p = fn.rfind('.');
-  std::string ext = p != fn.npos ? fn.substr(p) : fn;
-  std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-  std::transform(en.begin(), en.end(), en.begin(), ::tolower);
-  if ( ext == en )
-    return true;
-  if ( en == "jpg" && ext == "jpeg" )
-    return true;
-  return false;
-}
+// // Do the file extension and encoding match?
+// static bool matchExt(const std::string & fn,
+//                      std::string en) {
+//   size_t p = fn.rfind('.');
+//   std::string ext = p != fn.npos ? fn.substr(p) : fn;
+//   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+//   std::transform(en.begin(), en.end(), en.begin(), ::tolower);
+//   if ( ext == en )
+//     return true;
+//   if ( en == "jpg" && ext == "jpeg" )
+//     return true;
+//   return false;
+// }
 
 
 }  // namespace Espresso

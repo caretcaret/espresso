@@ -128,7 +128,7 @@
       while (!feof(fp) && fgets(input, 1024, fp)) {
         // NOTE(boulos): Because reading cpuinfo depends on dynamic
         // frequency scaling it's better to read the @ sign first
-        float GHz, MHz;
+        float GHz=0.f, MHz=0.f;
         if (strstr(input, "model name")) {
           char* at_sign = strstr(input, "@");
           if (at_sign) {

@@ -16,8 +16,8 @@ PROTO_SRC = $(shell find proto -type f -name '*.proto')
 LIBS= -lHalide -lprotobuf -lglog
 LIBDIRS := -Lbin -L/usr/local/lib -L/usr/local/bin
 
-CXXFLAGS= -O2 -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS))
-LDFLAGS = $(LIBDIRS) $(LIBS)
+override CXXFLAGS += -O2 -g -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS))
+override LDFLAGS += $(LIBDIRS) $(LIBS)
 
 
 .PHONY: clean build proto prebuild run clean debug
