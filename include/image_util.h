@@ -17,7 +17,7 @@ Halide::Image<T> from_blob(const BlobProto& blob) {
     int num_stride = channels * height * width;
     int channels_stride = height * width;
     int height_stride = width;
-    Halide::Image<T> arr = Halide::Image<T>(height, width, channels, num);
+    Halide::Image<T> arr = Halide::Image<T>(width, height, channels, num);
 
     for (int l = 0; l < num; l++) {
         for (int k = 0; k < channels; k++) {

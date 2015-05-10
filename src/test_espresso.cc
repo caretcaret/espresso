@@ -127,7 +127,6 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   // TODO: revisit InnerProduct to implicitly flatten
   Espresso::Layer flatten5 = Espresso::Flatten(pool5); //18
-  return flatten5;
 
   int fc6_size = 4096;
   Halide::ImageParam W6(Halide::type_of<float>(), 4);
