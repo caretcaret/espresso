@@ -43,13 +43,13 @@ Halide::Image<T> fill_random(Halide::Image<T> arr, std::default_random_engine& g
         dim3 = arr.extent(3);
     }
 
-    std::normal_distribution<T> dist(mean, stddev);
+    std::normal_distribution<double> dist(mean, stddev);
 
     for (int i3 = 0; i3 < dim3; i3++) {
         for (int i2 = 0; i2 < dim2; i2++) {
             for (int i1 = 0; i1 < dim1; i1++) {
                 for (int i0 = 0; i0 < dim0; i0++) {
-                    arr(i0, i1, i2, i3) = dist(generator);
+                    arr(i0, i1, i2, i3) = (T) dist(generator);
                 }
             }
         }
