@@ -44,8 +44,8 @@ public:
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
 
-    // convolved.compute_at(forward, Halide::Var::gpu_blocks());
-    forward.gpu_tile(i, j, 16, 16).compute_root();
+    convolved.compute_root();
+    // forward.gpu_tile(i, j, 16, 16).compute_root();
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -92,15 +92,7 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
 
-    forward.gpu_tile(i, j, 16, 16);
-    forward.compute_root();
-
-    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    // forward.unroll(i_inner).unroll(j_inner);
-    // forward.fuse(i_outer, j_outer, tile_index);
-    // forward.parallel(tile_index);
-    // forward.compute_root();
+    forward.gpu_tile(i, j, 16, 16).compute_root();
   }
 };
 
