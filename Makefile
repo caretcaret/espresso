@@ -20,7 +20,7 @@ override CXXFLAGS += -O2 -g -Wall -Wextra -std=c++11 $(addprefix -I, $(PROJDIRS)
 override LDFLAGS += $(LIBDIRS) $(LIBS)
 
 
-.PHONY: clean build proto prebuild run clean debug
+.PHONY: clean 
 
 all: prebuild proto
 	@$(MAKE) -s espresso

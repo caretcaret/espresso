@@ -40,9 +40,7 @@ public:
       forward(i, j, k, l) = Halide::sum(W(r.x, i, 0, 0) * input.forward(r.x, j, k, l));
     }
 
-    forward.vectorize(i, 8).parallel(k).parallel(l);
-    forward.compute_root();
-
+    forward.vectorize(i, 256).parallel(k).parallel(l).compute_root();
   }
 };
 

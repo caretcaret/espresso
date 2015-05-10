@@ -29,14 +29,17 @@ double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
 
   LOG(INFO) << "Running...";
 
-  // run compiled code
-  // Halide::Image<float> output = output_layer.forward.realize(output_layer.x, output_layer.y, output_layer.z, output_layer.w);
-  Halide::Buffer output(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
-  output_layer.forward.realize(output);
+  // run compiled code and place it into a buffer (still on the GPU for timing purposes)
+  Halide::Buffer output_buffer(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
+  output_layer.forward.realize(output_buffer);
 
   double end_time = CycleTimer::currentSeconds();
 
-  LOG(INFO) << end_time - start_time;
+  // Move the buffer onto the CPU
+  Halide::Image<float> output(output_buffer);
+
+  // LOG(INFO) << output;
+  LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
 
   return end_time - start_time;
 }
