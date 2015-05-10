@@ -35,9 +35,9 @@ public:
     Halide::RDom r(0, input.x);
 
     if (bias_term) {
-      forward(i, j, k, l) = Halide::sum(W(r.x, i) * input.forward(r.x, j, k, l)) + bias(i);
+      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l)) + bias(i);
     } else {
-      forward(i, j, k, l) = Halide::sum(W(r.x, i) * input.forward(r.x, j, k, l));
+      forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     }
 
     forward.vectorize(i, 256).parallel(k).parallel(l).compute_root();

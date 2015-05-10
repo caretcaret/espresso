@@ -131,7 +131,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   int fc6_size = 4096;
   Halide::ImageParam W6(Halide::type_of<float>(), 2);
   Halide::ImageParam bias6(Halide::type_of<float>(), 1);
-  Halide::Image<float> W6_ = from_blob(param.layers(16).blobs(0));
+  Halide::Image<float> W6_ = transpose(from_blob(param.layers(16).blobs(0)));
   Halide::Image<float> bias6_ = from_blob(param.layers(16).blobs(1));
   W6.set(W6_);
   bias6.set(bias6_);
@@ -144,7 +144,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   int fc7_size = 4096;
   Halide::ImageParam W7(Halide::type_of<float>(), 2);
   Halide::ImageParam bias7(Halide::type_of<float>(), 1);
-  Halide::Image<float> W7_ = from_blob(param.layers(19).blobs(0));
+  Halide::Image<float> W7_ = transpose(from_blob(param.layers(19).blobs(0)));
   Halide::Image<float> bias7_ = from_blob(param.layers(19).blobs(1));
   W7.set(W7_);
   bias7.set(bias7_);
@@ -157,7 +157,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   int fc8_size = 1000;
   Halide::ImageParam W8(Halide::type_of<float>(), 2);
   Halide::ImageParam bias8(Halide::type_of<float>(), 1);
-  Halide::Image<float> W8_ = from_blob(param.layers(22).blobs(0));
+  Halide::Image<float> W8_ = transpose(from_blob(param.layers(22).blobs(0)));
   Halide::Image<float> bias8_ = from_blob(param.layers(22).blobs(1));
   W8.set(W8_);
   bias8.set(bias8_);

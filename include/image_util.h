@@ -8,6 +8,19 @@
 namespace Espresso {
 
 template<class T = float>
+Halide::Image<T> transpose(Halide::Image<T> arr) {
+    Halide::Image<T> arr2(arr.height(), arr.width());
+
+    for (int j = 0; j < arr.height(); j++) {
+      for (int i = 0; i < arr.width(); i++) {
+        arr2(j, i) = arr(i, j);
+      }
+    }
+
+    return arr2;
+}
+
+template<class T = float>
 Halide::Image<T> from_blob(const BlobProto& blob, int dim=0) {
     int num = blob.has_num() ? blob.num() : 1;
     int channels = blob.has_channels() ? blob.channels() : 1;
