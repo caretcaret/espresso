@@ -4,8 +4,121 @@
 #include "Halide.h"
 #include <random>
 #include <glog/logging.h>
+#include <stdio.h>
+#include <string>
+#include <string.h>
+#include <algorithm>
+
+
+#define _assert(condition, ...) if (!(condition)) {fprintf(stderr, __VA_ARGS__); exit(-1);}
+#define SWAP_ENDIAN16(little_endian, value) if (little_endian) { (value) = (((value) & 0xff)<<8)|(((value) & 0xff00)>>8); }
+
 
 namespace Espresso {
+
+inline int is_little_endian() {
+    int value = 1;
+    return ((char *) &value)[0] == 1;
+}
+// Convert to u8
+inline void convert(uint8_t in, uint8_t &out) {out = in;}
+inline void convert(uint16_t in, uint8_t &out) {out = in >> 8;}
+inline void convert(uint32_t in, uint8_t &out) {out = in >> 24;}
+inline void convert(int8_t in, uint8_t &out) {out = in;}
+inline void convert(int16_t in, uint8_t &out) {out = in >> 8;}
+inline void convert(int32_t in, uint8_t &out) {out = in >> 24;}
+inline void convert(float in, uint8_t &out) {out = (uint8_t)(in*255.0f);}
+inline void convert(double in, uint8_t &out) {out = (uint8_t)(in*255.0f);}
+
+// Convert to u16
+inline void convert(uint8_t in, uint16_t &out) {out = in << 8;}
+inline void convert(uint16_t in, uint16_t &out) {out = in;}
+inline void convert(uint32_t in, uint16_t &out) {out = in >> 16;}
+inline void convert(int8_t in, uint16_t &out) {out = in << 8;}
+inline void convert(int16_t in, uint16_t &out) {out = in;}
+inline void convert(int32_t in, uint16_t &out) {out = in >> 16;}
+inline void convert(float in, uint16_t &out) {out = (uint16_t)(in*65535.0f);}
+inline void convert(double in, uint16_t &out) {out = (uint16_t)(in*65535.0f);}
+
+// Convert from u8
+inline void convert(uint8_t in, uint32_t &out) {out = in << 24;}
+inline void convert(uint8_t in, int8_t &out) {out = in;}
+inline void convert(uint8_t in, int16_t &out) {out = in << 8;}
+inline void convert(uint8_t in, int32_t &out) {out = in << 24;}
+inline void convert(uint8_t in, float &out) {out = in/255.0f;}
+inline void convert(uint8_t in, double &out) {out = in/255.0f;}
+
+// Convert from u16
+inline void convert(uint16_t in, uint32_t &out) {out = in << 16;}
+inline void convert(uint16_t in, int8_t &out) {out = in >> 8;}
+inline void convert(uint16_t in, int16_t &out) {out = in;}
+inline void convert(uint16_t in, int32_t &out) {out = in << 16;}
+inline void convert(uint16_t in, float &out) {out = in/65535.0f;}
+inline void convert(uint16_t in, double &out) {out = in/65535.0f;}
+
+template<typename T>
+Halide::Image<T> load_ppm(std::string filename) {
+
+    /* open file and test for it being a ppm */
+    FILE *f = fopen(filename.c_str(), "rb");
+    _assert(f, "File %s could not be opened for reading\n", filename.c_str());
+
+    int width, height, maxval;
+    char header[256];
+    _assert(fscanf(f, "%255s", header) == 1, "Could not read PPM header\n");
+    _assert(fscanf(f, "%d %d\n", &width, &height) == 2, "Could not read PPM width and height\n");
+    _assert(fscanf(f, "%d", &maxval) == 1, "Could not read PPM max value\n");
+    _assert(fgetc(f) != EOF, "Could not read char from PPM\n");
+
+    int bit_depth = 0;
+    if (maxval == 255) { bit_depth = 8; }
+    else if (maxval == 65535) { bit_depth = 16; }
+    else { _assert(false, "Invalid bit depth in PPM\n"); }
+
+    _assert(strcmp(header, "P6") == 0 || strcmp(header, "p6") == 0, "Input is not binary PPM\n");
+
+    int channels = 3;
+    Halide::Image<T> im(width, height, channels);
+
+    // convert the data to T
+    if (bit_depth == 8) {
+        uint8_t *data = new uint8_t[width*height*3];
+        _assert(fread((void *) data,
+                      sizeof(uint8_t), width*height*3, f) == (size_t) (width*height*3),
+                "Could not read PPM 8-bit data\n");
+        fclose(f);
+
+        T *im_data = (T*) im.data();
+        for (int y = 0; y < im.height(); y++) {
+            uint8_t *row = (uint8_t *)(&data[(y*width)*3]);
+            for (int x = 0; x < im.width(); x++) {
+                convert(*row++, im_data[(0*height+y)*width+x]);
+                convert(*row++, im_data[(1*height+y)*width+x]);
+                convert(*row++, im_data[(2*height+y)*width+x]);
+            }
+        }
+        delete[] data;
+    } else if (bit_depth == 16) {
+        int little_endian = is_little_endian();
+        uint16_t *data = new uint16_t[width*height*3];
+        _assert(fread((void *) data, sizeof(uint16_t), width*height*3, f) == (size_t) (width*height*3), "Could not read PPM 16-bit data\n");
+        fclose(f);
+        T *im_data = (T*) im.data();
+        for (int y = 0; y < im.height(); y++) {
+            uint16_t *row = (uint16_t *) (&data[(y*width)*3]);
+            for (int x = 0; x < im.width(); x++) {
+                uint16_t value;
+                value = *row++; SWAP_ENDIAN16(little_endian, value); convert(value, im_data[(0*height+y)*width+x]);
+                value = *row++; SWAP_ENDIAN16(little_endian, value); convert(value, im_data[(1*height+y)*width+x]);
+                value = *row++; SWAP_ENDIAN16(little_endian, value); convert(value, im_data[(2*height+y)*width+x]);
+            }
+        }
+        delete[] data;
+    }
+    im(0,0,0) = im(0,0,0);      /* Mark dirty inside read/write functions. */
+
+    return im;
+}
 
 template<class T = float>
 Halide::Image<T> transpose(Halide::Image<T> arr) {
@@ -26,7 +139,6 @@ Halide::Image<T> from_blob(const BlobProto& blob, int dim=0) {
     int channels = blob.has_channels() ? blob.channels() : 1;
     int height = blob.has_height() ? blob.height() : 1;
     int width = blob.has_width() ? blob.width() : 1;
-    LOG(INFO) << width << " " << height << " " << channels << " " << num;
     int num_stride = channels * height * width;
     int channels_stride = height * width;
     int height_stride = width;

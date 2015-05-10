@@ -3,7 +3,7 @@
 
 namespace Espresso {
 
-int test_main();
+int test_main(std::string filename);
 Layer bvlc_reference_caffenet();
 
 } // namespace Espresso

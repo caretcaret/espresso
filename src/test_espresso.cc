@@ -1,4 +1,8 @@
 #include <random>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
 
 #include "espresso.h"
 #include "CycleTimer.h"
@@ -8,7 +12,7 @@
 
 namespace Espresso {
 
-#define IMAGES 20
+#define IMAGES 1
 
 double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
   // JIT compile before timing code
@@ -38,10 +42,42 @@ double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
   // Move the buffer onto the CPU
   Halide::Image<float> output(output_buffer);
 
-  // LOG(INFO) << output;
   LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
 
   return end_time - start_time;
+}
+
+Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_gpu=false) {
+  // JIT compile before timing code
+
+  LOG(INFO) << "Compiling...";
+
+  if (use_gpu) {
+    Halide::Target target = Halide::get_host_target();
+    target.set_feature(Halide::Target::OpenCL);
+
+    output_layer.forward.compile_jit(target);
+  }
+  else {
+    output_layer.forward.compile_jit();
+  }
+
+  double start_time = CycleTimer::currentSeconds();
+
+  LOG(INFO) << "Running...";
+
+  // run compiled code and place it into a buffer (still on the GPU for timing purposes)
+  Halide::Buffer output_buffer(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
+  output_layer.forward.realize(output_buffer);
+
+  double end_time = CycleTimer::currentSeconds();
+
+  // Move the buffer onto the CPU
+  Halide::Image<float> output(output_buffer);
+
+  LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
+
+  return output;
 }
 
 // yolohack lol
@@ -168,7 +204,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   Espresso::Layer softmax = Espresso::Softmax(fc8); //27
   Espresso::Layer loss = Espresso::MultinomialLogisticLoss(softmax, labels);  //28
 
-  return softmax; // screw it not returning loss/accuracy atm
+  return softmax; // TODO: screw it not returning loss/accuracy atm
 
 }
 
@@ -328,18 +364,58 @@ double test_ffnn(std::default_random_engine& generator,
   return run_net(layer2, true);
 }
 
-int test_main() {
+int test_main(std::string input_im) {
   std::random_device rd;
   std::default_random_engine generator(rd());
 
+  std::vector<std::string> classes;
+  std::ifstream infile("./images/meta/synset_words.txt");
+
+  std::string line;
+  while (std::getline(infile, line)) {
+    classes.push_back(line);
+  }
+
+  std::string mean_proto = "./images/meta/imagenet_mean.binaryproto";
+  BlobProto mean_blob;
+
+  ReadProtoFromBinaryFile(mean_proto, &mean_blob);
+
+  Halide::Image<float> im = load_ppm<float>(input_im);
+  Halide::Image<float> mean_im = from_blob(mean_blob);
   Halide::ImageParam input_data(Halide::type_of<float>(), 4);
+  Halide::Image<float> input_data_(227, 227, 3, IMAGES);
+
+  for (int k = 0; k < 3; k++) {
+    for (int j = 0; j < 227; j++) {
+      for (int i = 0; i < 227; i++) {
+        input_data_(i, j, k, 0) = 256.0f * im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k);
+      }
+    }
+  }
+
   Halide::ImageParam input_labels(Halide::type_of<int>(), 4);
-  input_data.set(Espresso::fill_random(Halide::Image<float>(227, 227, 3, IMAGES), generator, 0.0f, 42.0f)); // I think it uses [0, 255] offset by mean
+  input_data.set(input_data_);
   input_labels.set(Espresso::fill_random(Halide::Image<int>(1, 1, 1, IMAGES), generator, 500, 166)); // too lazy to initialize properly
   Espresso::Layer net = bvlc_reference_caffenet(input_data, input_labels);
 
+  Halide::Image<float> output = run_net_with_output(net, true);
 
-  run_net(net, true);
+  std::vector<std::tuple<float, int> > results;
+
+  for (int i = 0; i < 1000; i++) {
+    results.push_back(std::make_pair(output(i, 0, 0, 0), i));
+  }
+
+  std::sort(results.begin(), results.end());
+
+  for (size_t i = 995; i < 1000; i++) {
+    float pct;
+    int cls;
+    std::tie(pct, cls) = results[i];
+    LOG(INFO) << 1000 - i << " " << classes[i] << " " << 100 * pct << "%%";
+  }
+
   // test_convolution(generator, 2048, 2048);
   // test_pooling(generator, "max", 2048, 2048);
   // test_LRN(generator, 2048, 2048);
