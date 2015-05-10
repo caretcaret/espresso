@@ -54,7 +54,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   int conv1_filters = 96, conv1_size = 11, conv1_stride = 4;
   Halide::ImageParam kernel1(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias1(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias1(Halide::type_of<float>(), 1);
   Halide::Image<float> kernel1_ = from_blob(param.layers(1).blobs(0));
   Halide::Image<float> bias1_ = from_blob(param.layers(1).blobs(1));
   kernel1.set(kernel1_);
@@ -72,7 +72,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   int conv2_filters = 256, conv2_pad = 2, conv2_size = 5, conv2_group = 2;
   Halide::ImageParam kernel2(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias2(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias2(Halide::type_of<float>(), 1);
   Halide::Image<float> kernel2_ = from_blob(param.layers(5).blobs(0));
   Halide::Image<float> bias2_ = from_blob(param.layers(5).blobs(1));
   kernel2.set(kernel2_);
@@ -91,7 +91,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   int conv3_filters = 384, conv3_pad = 1, conv3_size = 3;
   Halide::ImageParam kernel3(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias3(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias3(Halide::type_of<float>(), 1);
   Halide::Image<float> kernel3_ = from_blob(param.layers(9).blobs(0));
   Halide::Image<float> bias3_ = from_blob(param.layers(9).blobs(1));
   kernel3.set(kernel3_);
@@ -102,7 +102,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   int conv4_filters = 384, conv4_pad = 1, conv4_size = 3, conv4_group = 2;
   Halide::ImageParam kernel4(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias4(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias4(Halide::type_of<float>(), 1);
   Halide::Image<float> kernel4_ = from_blob(param.layers(11).blobs(0));
   Halide::Image<float> bias4_ = from_blob(param.layers(11).blobs(1));
   kernel4.set(kernel4_);
@@ -113,7 +113,7 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
   int conv5_filters = 256, conv5_pad = 1, conv5_size = 3, conv5_group = 2;
   Halide::ImageParam kernel5(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias5(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias5(Halide::type_of<float>(), 1);
   Halide::Image<float> kernel5_ = from_blob(param.layers(13).blobs(0));
   Halide::Image<float> bias5_ = from_blob(param.layers(13).blobs(1));
   kernel5.set(kernel5_);
@@ -129,8 +129,8 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   Espresso::Layer flatten5 = Espresso::Flatten(pool5); //18
 
   int fc6_size = 4096;
-  Halide::ImageParam W6(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias6(Halide::type_of<float>(), 4);
+  Halide::ImageParam W6(Halide::type_of<float>(), 2);
+  Halide::ImageParam bias6(Halide::type_of<float>(), 1);
   Halide::Image<float> W6_ = from_blob(param.layers(16).blobs(0));
   Halide::Image<float> bias6_ = from_blob(param.layers(16).blobs(1));
   W6.set(W6_);
@@ -142,8 +142,8 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   Espresso::Layer drop6 = Espresso::Dropout(relu6); //21
 
   int fc7_size = 4096;
-  Halide::ImageParam W7(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias7(Halide::type_of<float>(), 4);
+  Halide::ImageParam W7(Halide::type_of<float>(), 2);
+  Halide::ImageParam bias7(Halide::type_of<float>(), 1);
   Halide::Image<float> W7_ = from_blob(param.layers(19).blobs(0));
   Halide::Image<float> bias7_ = from_blob(param.layers(19).blobs(1));
   W7.set(W7_);
@@ -155,8 +155,8 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
   Espresso::Layer drop7 = Espresso::Dropout(relu7); //24
 
   int fc8_size = 1000;
-  Halide::ImageParam W8(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias8(Halide::type_of<float>(), 4);
+  Halide::ImageParam W8(Halide::type_of<float>(), 2);
+  Halide::ImageParam bias8(Halide::type_of<float>(), 1);
   Halide::Image<float> W8_ = from_blob(param.layers(22).blobs(0));
   Halide::Image<float> bias8_ = from_blob(param.layers(22).blobs(1));
   W8.set(W8_);
@@ -177,7 +177,7 @@ double test_convolution(std::default_random_engine& generator,
     int pad_x=2, int pad_y=2, int stride_x=3, int stride_y=3, bool bias_term=true, int group=2) {
   Halide::ImageParam input(Halide::type_of<float>(), 4);
   Halide::ImageParam kernel(Halide::type_of<float>(), 4);
-  Halide::ImageParam bias(Halide::type_of<float>(), 4);
+  Halide::ImageParam bias(Halide::type_of<float>(), 1);
 
   Espresso::Layer input_layer = Espresso::MemoryData(input, input_x, input_y, input_z, input_w);
   Espresso::Layer output_layer = Espresso::Convolution(input_layer, Halide::Func(kernel), Halide::Func(bias),
@@ -296,19 +296,19 @@ double test_ffnn(std::default_random_engine& generator,
     int n_input=5, int n_hidden=7, int n_classes=3) {
   // construct abstract network
   Halide::ImageParam input(Halide::type_of<float>(), 4);
-  Halide::ImageParam W1(Halide::type_of<float>(), 4);
-  Halide::ImageParam b1(Halide::type_of<float>(), 4);
-  Halide::ImageParam W2(Halide::type_of<float>(), 4);
-  Halide::ImageParam b2(Halide::type_of<float>(), 4);
+  Halide::ImageParam W1(Halide::type_of<float>(), 2);
+  Halide::ImageParam b1(Halide::type_of<float>(), 1);
+  Halide::ImageParam W2(Halide::type_of<float>(), 2);
+  Halide::ImageParam b2(Halide::type_of<float>(), 1);
 
   Espresso::Layer input_layer = Espresso::MemoryData(input, n_input, 1, 1, 1);
   Espresso::Layer layer1 = Espresso::ReLU(Espresso::InnerProduct(input_layer, Halide::Func(W1), Halide::Func(b1), n_hidden));
   Espresso::Layer layer2 = Espresso::Softmax(Espresso::InnerProduct(layer1, Halide::Func(W2), Halide::Func(b2), n_classes));
 
   // instantiate inputs
-  Halide::Image<float> input_(n_input, 1, 1, 1);
-  Halide::Image<float> W1_(n_hidden, n_input, 1, 1), W2_(n_classes, n_hidden, 1, 1);
-  Halide::Image<float> b1_(n_hidden, 1, 1, 1), b2_(n_classes, 1, 1, 1);
+  Halide::Image<float> input_(n_input);
+  Halide::Image<float> W1_(n_hidden, n_input), W2_(n_classes, n_hidden);
+  Halide::Image<float> b1_(n_hidden), b2_(n_classes);
   Espresso::fill_random(input_, generator, 0.0f, 1.0f);
   Espresso::fill_random(W1_, generator, 0.0f, 1.0f);
   Espresso::fill_random(W2_, generator, 0.0f, 1.0f);

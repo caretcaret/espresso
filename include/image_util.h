@@ -8,7 +8,7 @@
 namespace Espresso {
 
 template<class T = float>
-Halide::Image<T> from_blob(const BlobProto& blob) {
+Halide::Image<T> from_blob(const BlobProto& blob, int dim=0) {
     int num = blob.has_num() ? blob.num() : 1;
     int channels = blob.has_channels() ? blob.channels() : 1;
     int height = blob.has_height() ? blob.height() : 1;
@@ -17,7 +17,22 @@ Halide::Image<T> from_blob(const BlobProto& blob) {
     int num_stride = channels * height * width;
     int channels_stride = height * width;
     int height_stride = width;
-    Halide::Image<T> arr = Halide::Image<T>(width, height, channels, num);
+
+
+    Halide::Image<T> arr;
+
+    if (dim == 0) {
+      if (width == 1) dim = 1;
+      else if (height == 1) dim = 2;
+      else if (channels == 1) dim = 3;
+      else if (num == 1) dim = 4;
+      else dim = 4;
+    }
+    
+    if (dim == 1) arr = Halide::Image<T>(width);
+    else if (dim == 2) arr = Halide::Image<T>(width, height);
+    else if (dim == 3) arr = Halide::Image<T>(width, height, channels);
+    else arr = Halide::Image<T>(width, height, channels, num);  // dim = 4
 
     for (int l = 0; l < num; l++) {
         for (int k = 0; k < channels; k++) {

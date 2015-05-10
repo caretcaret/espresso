@@ -21,7 +21,7 @@ public:
             n_filters,
             input.w) {
     // Kernel size is kernel_x by kernel_y by input.z / group by n_filters, where n_filters is the number of filters
-    // Bias size is n_filters by 1 by 1 by 1
+    // Bias size is n_filters
     // kernel_x, kernel_y must be odd
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
@@ -37,7 +37,7 @@ public:
 
     if (bias_term) {
       convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k, 0, 0, 0);
+          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
     } else {
       convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
           kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
