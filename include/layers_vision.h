@@ -47,16 +47,9 @@ public:
 
     forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
 
-    // int a = -1;
+    Halide::Var tile_index = cpu_schedule_vision(forward);
+    padded.compute_at(forward, tile_index);
 
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    forward.unroll(i_inner).unroll(j_inner);
-    forward.fuse(i_outer, j_outer, tile_index);
-    forward.parallel(tile_index);
-    forward.compute_root();
-
-    // convolved.trace_stores();
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -103,12 +96,8 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
 
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    forward.unroll(i_inner).unroll(j_inner);
-    forward.fuse(i_outer, j_outer, tile_index);
-    forward.parallel(tile_index);
-    forward.compute_root();
+    Halide::Var tile_index = cpu_schedule_vision(forward, 8, 4);
+    //padded.compute_at(forward, tile_index); // lol segfault
   }
 };
 
@@ -126,19 +115,8 @@ public:
     normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
     forward(i, j, k, l) = activation(i, j, k, l) / normalizer(i, j, k, l);
 
-    Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    activation.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    activation.unroll(i_inner).unroll(j_inner);
-    activation.fuse(i_outer, j_outer, tile_index);
-    activation.parallel(tile_index);
-    activation.compute_root();
-
-    Halide::Var i_inner2, i_outer2, j_inner2, j_outer2, tile_index2;
-    forward.tile(i, j, i_outer2, j_outer2, i_inner2, j_inner2, 4, 4);
-    forward.unroll(i_inner2).unroll(j_inner2);
-    forward.fuse(i_outer2, j_outer2, tile_index2);
-    forward.parallel(tile_index2);
-    forward.compute_root();
+    Halide::Var tile_index = cpu_schedule_vision(forward);
+    activation.compute_at(forward, tile_index);
   }
 };
 

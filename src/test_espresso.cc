@@ -19,7 +19,6 @@ double run_net(Espresso::Layer output_layer) {
 
   double end_time = CycleTimer::currentSeconds();
 
-  LOG(INFO) << output;
   LOG(INFO) << end_time - start_time;
 
   return end_time - start_time;

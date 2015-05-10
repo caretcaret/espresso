@@ -42,14 +42,7 @@ public:
       forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     }
 
-    forward.parallel(k).parallel(l);
-    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-    // forward.tile(i, j, i_outer, j_outer, i_inner, j_inner, 4, 4);
-    // forward.unroll(i_inner).unroll(j_inner);
-    // forward.fuse(i_outer, j_outer, tile_index);
-    // forward.parallel(tile_index);
-    forward.compute_root();
-
+    forward.parallel(l).parallel(k).compute_root();
   }
 };
 
@@ -64,6 +57,8 @@ public:
     activation(i, j, k, l) = Halide::fast_exp(input.forward(i, j, k, l));
     normalizer(j, k, l) = Halide::sum(activation(r.x, j, k, l));
     forward(i, j, k, l) = activation(i, j, k, l) / normalizer(j, k, l);
+
+    forward.parallel(l);
   }
 };
 
@@ -96,7 +91,14 @@ class Flatten : public Layer {
 public:
   Flatten(Layer input)
     : Layer(input.x * input.y * input.z, 1, 1, input.w) {
-      forward(i, j, k, l) = input.forward((i / (input.y * input.z)), (i / input.z) % input.y, i % input.z, l);
+      Halide::Expr i1, i2, j1, k1;
+
+      i1 = i % input.z;
+      i2 = i / input.z;
+      j1 = i2 % input.y;
+      k1 = i2 / input.y;
+
+      forward(i, j, k, l) = input.forward(i2, j1, k1, l);
   }
 };
 
