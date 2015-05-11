@@ -40,7 +40,7 @@ public:
       forward(i, j, k, l) = Halide::sum(W(i, r.x) * input.forward(r.x, j, k, l));
     }
 
-    forward.vectorize(i, 256).parallel(k).parallel(l).compute_root();
+    forward.vectorize(i, 512).parallel(l).compute_root();
   }
 };
 
@@ -55,6 +55,8 @@ public:
     activation(i, j, k, l) = Halide::fast_exp(input.forward(i, j, k, l));
     normalizer(j, k, l) = Halide::sum(activation(r.x, j, k, l));
     forward(i, j, k, l) = activation(i, j, k, l) / normalizer(j, k, l);
+
+    normalizer.compute_at(forward, i);
   }
 };
 

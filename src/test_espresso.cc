@@ -29,12 +29,12 @@ double run_net(Espresso::Layer output_layer, bool use_gpu=false, int n_images=DE
     output_layer.forward.compile_jit();
   }
 
-  double start_time = CycleTimer::currentSeconds();
-
   LOG(INFO) << "Running... ";
-
   // run compiled code and place it into a buffer (still on the GPU for timing purposes)
   Halide::Buffer output_buffer(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
+
+  double start_time = CycleTimer::currentSeconds();
+
   output_layer.forward.realize(output_buffer);
 
   double end_time = CycleTimer::currentSeconds();
@@ -415,7 +415,7 @@ int test_main(std::vector<std::string>& input_ims) {
     }
     std::sort(results.begin(), results.end());
 
-    std::cout << "\n=== " << input_ims[l] << " ===\n";
+    std::cout << "\n=== " << l << ": " << input_ims[l] << " ===\n";
 
     for (size_t i = 0; i < 10; i++) {
       float pct;

@@ -41,21 +41,7 @@ public:
 
     forward(i, j, k, l) = convolved(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    // Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
-    // Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
-
-    // if (bias_term) {
-    //   convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-    //       kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
-    // } else {
-    //   convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-    //       kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
-    // }
-
-    // forward(i, j, k, l) = convolved(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
-
-    // convolved.compute_root();
-    forward.gpu_tile(i, j, 16, 16).compute_root();
+    forward.gpu_tile(i, j, k, 4, 4, 64).compute_root(); // k is the largest dimension
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -81,7 +67,6 @@ public:
     Halide::Func pooled("pooled");
     Halide::Func rand_x, rand_y;
     Halide::RDom r(0, pool_x, 0, pool_y);
-    //Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
 
     if (method == "max") {
       pooled(i, j, k, l) = Halide::maximum(padded(i + r.x, j + r.y, k, l));
@@ -97,7 +82,7 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    forward./*gpu_tile(i, j, 16, 16).*/compute_root();
+    forward/*.gpu_tile(i, j, k, 4, 4, 64)*/.compute_root();
   }
 };
 
@@ -116,17 +101,6 @@ public:
     activation(i, j, k, l) = Halide::sum(val * val);
     normalizer(i, j, k, l) = Halide::fast_pow(1.0f + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
     forward(i, j, k, l) = clamped(i, j, k, l) / normalizer(i, j, k, l);
-
-    // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
-
-    // Halide::Var i_inner2, i_outer2, j_inner2, j_outer2, tile_index2;
-    // forward.tile(i, j, i_outer2, j_outer2, i_inner2, j_inner2, 4, 4);
-    // forward.unroll(i_inner2).unroll(j_inner2);
-    // forward.fuse(i_outer2, j_outer2, tile_index2);
-    // forward.parallel(tile_index2);
-    // forward.compute_root();
-
-    // activation.compute_at(forward, tile_index2);
 
     forward.gpu_tile(i, j, 16, 16);
     forward.compute_root();
