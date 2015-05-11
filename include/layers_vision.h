@@ -25,25 +25,34 @@ public:
     // kernel_x, kernel_y must be odd
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
-    Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
-    Halide::Func padded("padded"), convolved("convolved");
-    Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
-    Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
+    Halide::Func padded = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
+    Halide::Func convolved("convolved");
 
-    padded(i, j, k, l) = Halide::select(
-        (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
-        clamped(i / (2 * pad_x + 1), j / (2 * pad_y + 1), k, l),
-        0.0f);
+    Halide::RDom r(0, kernel_x, 0, kernel_y, 0, input_group_size);
+    Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
 
     if (bias_term) {
       convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
+          kernel(r.x, r.y, r.z, group_num * output_group_size + group_idx)) + bias(k);
     } else {
       convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
-          kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
+          kernel(r.x, r.y, r.z, group_num * output_group_size + group_idx));
     }
 
-    forward(i, j, k, l) = convolved(i * stride_x, j * stride_y, k, l);
+    forward(i, j, k, l) = convolved(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
+
+    // Halide::RDom r(-kernel_x / 2, kernel_x / 2 + 1, -kernel_y / 2, kernel_y / 2 + 1, 0, input_group_size);
+    // Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
+
+    // if (bias_term) {
+    //   convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+    //       kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx)) + bias(k);
+    // } else {
+    //   convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+    //       kernel(r.x + kernel_x / 2, r.y + kernel_y / 2, r.z, group_num * output_group_size + group_idx));
+    // }
+
+    // forward(i, j, k, l) = convolved(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
     convolved.compute_root();
     // forward.gpu_tile(i, j, 16, 16).compute_root();
@@ -68,16 +77,11 @@ public:
             (input.y + 2 * pad_y - pool_y) / stride_y + 1,
             input.z,
             input.w) {
-    Halide::Func clamped = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
-    Halide::Func padded("padded");
+    Halide::Func padded = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
     Halide::Func pooled("pooled");
     Halide::Func rand_x, rand_y;
-    Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
-
-    padded(i, j, k, l) = Halide::select(
-        (i % (2 * pad_x + 1) == 0) && (j % (2 * pad_y + 1) == 0),
-        clamped(i / (2 * pad_x + 1), j / (2 * pad_y + 1), k, l),
-        0.0f);
+    Halide::RDom r(0, pool_x, 0, pool_y);
+    //Halide::RDom r(-pool_x / 2, pool_x / 2 + 1, -pool_y / 2, pool_y / 2 + 1);
 
     if (method == "max") {
       pooled(i, j, k, l) = Halide::maximum(padded(i + r.x, j + r.y, k, l));
@@ -91,9 +95,9 @@ public:
       throw new std::invalid_argument("No such pooling method");
     }
 
-    forward(i, j, k, l) = pooled(i * stride_x, j * stride_y, k, l);
+    forward(i, j, k, l) = pooled(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    forward.gpu_tile(i, j, 16, 16).compute_root();
+    forward/*.gpu_tile(i, j, 16, 16)*/.compute_root();
   }
 };
 
@@ -107,9 +111,11 @@ public:
     Halide::Func normalizer("normalizer");
     Halide::RDom r(-region_x / 2, region_x / 2 + 1, -region_y / 2, region_y / 2 + 1, -region_z / 2, region_z / 2 + 1);
 
-    activation(i, j, k, l) = Halide::sum(clamped(i + r.x, j + r.y, k + r.z, l));
+    Halide::Expr val = clamped(i + r.x, j + r.y, k + r.z, l);
+
+    activation(i, j, k, l) = Halide::sum(val * val);
     normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
-    forward(i, j, k, l) = activation(i, j, k, l) / normalizer(i, j, k, l);
+    forward(i, j, k, l) = clamped(i, j, k, l) / normalizer(i, j, k, l);
 
     // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;
 

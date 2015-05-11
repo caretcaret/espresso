@@ -87,7 +87,7 @@ class Flatten : public Layer {
 public:
   Flatten(Layer input)
     : Layer(input.x * input.y * input.z, 1, 1, input.w) {
-      forward(i, j, k, l) = input.forward((i / (input.y * input.z)), (i / input.z) % input.y, i % input.z, l);
+      forward(i, j, k, l) = input.forward(i % input.x, (i / input.x) % input.y, i / (input.x * input.y), l);
   }
 };
 

@@ -74,6 +74,7 @@ Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_
 
   // Move the buffer onto the CPU
   Halide::Image<float> output(output_buffer);
+  //LOG(INFO) << output;
 
   LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
 
@@ -208,9 +209,9 @@ Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam 
 
 }
 
-double test_convolution(std::default_random_engine& generator,
-    int input_x=256, int input_y=256, int input_z=4, int input_w=2, int kernel_x=5, int kernel_y=5, int n_filters=8,
-    int pad_x=2, int pad_y=2, int stride_x=3, int stride_y=3, bool bias_term=true, int group=2) {
+Halide::Image<float> test_convolution(std::default_random_engine& generator,
+    int input_x=16, int input_y=16, int input_z=1, int input_w=1, int kernel_x=5, int kernel_y=5, int n_filters=1,
+    int pad_x=2, int pad_y=2, int stride_x=3, int stride_y=3, bool bias_term=true, int group=1) {
   Halide::ImageParam input(Halide::type_of<float>(), 4);
   Halide::ImageParam kernel(Halide::type_of<float>(), 4);
   Halide::ImageParam bias(Halide::type_of<float>(), 1);
@@ -234,7 +235,7 @@ double test_convolution(std::default_random_engine& generator,
   kernel.set(kernel_);
   bias.set(bias_);
 
-  return run_net(output_layer, true);
+  return run_net_with_output(output_layer, true);
 }
 
 double test_pooling(std::default_random_engine& generator,
@@ -389,7 +390,7 @@ int test_main(std::string input_im) {
   for (int k = 0; k < 3; k++) {
     for (int j = 0; j < 227; j++) {
       for (int i = 0; i < 227; i++) {
-        input_data_(i, j, k, 0) = 256.0f * im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k);
+        input_data_(i, j, k, 0) = im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k) / 256.0f;
       }
     }
   }
@@ -413,7 +414,7 @@ int test_main(std::string input_im) {
     float pct;
     int cls;
     std::tie(pct, cls) = results[i];
-    LOG(INFO) << 1000 - i << " " << classes[i] << " " << 100 * pct << "%%";
+    LOG(INFO) << 1000 - i << " " << classes[cls] << " " << 100 * pct << "%";
   }
 
   // test_convolution(generator, 2048, 2048);
