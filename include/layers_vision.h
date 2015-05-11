@@ -25,17 +25,17 @@ public:
     // kernel_x, kernel_y must be odd
     int input_group_size = input.z / group;
     int output_group_size = n_filters / group;
-    Halide::Func padded = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
+    // Halide::Func padded = Halide::BoundaryConditions::constant_exterior(input.forward, 0.0f, 0, input.x, 0, input.y);
     Halide::Func convolved("convolved");
 
     Halide::RDom r(0, kernel_x, 0, kernel_y, 0, input_group_size);
     Halide::Expr group_num = k / output_group_size, group_idx = k % output_group_size;
 
     if (bias_term) {
-      convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+      convolved(i, j, k, l) = Halide::sum(input.forward(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
           kernel(r.x, r.y, r.z, group_num * output_group_size + group_idx)) + bias(k);
     } else {
-      convolved(i, j, k, l) = Halide::sum(padded(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
+      convolved(i, j, k, l) = Halide::sum(input.forward(i + r.x, j + r.y, group_num * input_group_size + r.z, l) *
           kernel(r.x, r.y, r.z, group_num * output_group_size + group_idx));
     }
 
@@ -54,8 +54,8 @@ public:
 
     // forward(i, j, k, l) = convolved(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    convolved.compute_root();
-    // forward.gpu_tile(i, j, 16, 16).compute_root();
+    // convolved.compute_root();
+    forward.gpu_tile(i, j, 16, 16).compute_root();
   }
 
   Convolution(const LayerParameter& param) : Layer() {
@@ -97,7 +97,7 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    forward.gpu_tile(i, j, 16, 16).compute_root();
+    forward./*gpu_tile(i, j, 16, 16).*/compute_root();
   }
 };
 
