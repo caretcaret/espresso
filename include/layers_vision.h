@@ -97,7 +97,7 @@ public:
 
     forward(i, j, k, l) = pooled(i * stride_x - pad_x, j * stride_y - pad_y, k, l);
 
-    forward/*.gpu_tile(i, j, 16, 16)*/.compute_root();
+    forward.gpu_tile(i, j, 16, 16).compute_root();
   }
 };
 
@@ -114,7 +114,7 @@ public:
     Halide::Expr val = clamped(i + r.x, j + r.y, k + r.z, l);
 
     activation(i, j, k, l) = Halide::sum(val * val);
-    normalizer(i, j, k, l) = Halide::fast_pow(1 + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
+    normalizer(i, j, k, l) = Halide::fast_pow(1.0f + (alpha / (region_x * region_y * region_z)) * activation(i, j, k, l), beta);
     forward(i, j, k, l) = clamped(i, j, k, l) / normalizer(i, j, k, l);
 
     // Halide::Var i_inner, i_outer, j_inner, j_outer, tile_index;

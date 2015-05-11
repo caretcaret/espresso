@@ -74,7 +74,7 @@ Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_
 
   // Move the buffer onto the CPU
   Halide::Image<float> output(output_buffer);
-  //LOG(INFO) << output;
+  LOG(INFO) << output;
 
   LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
 
@@ -390,7 +390,7 @@ int test_main(std::string input_im) {
   for (int k = 0; k < 3; k++) {
     for (int j = 0; j < 227; j++) {
       for (int i = 0; i < 227; i++) {
-        input_data_(i, j, k, 0) = im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k) / 256.0f;
+        input_data_(i, j, k, 0) = 256.0f * im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k);
       }
     }
   }
@@ -410,7 +410,7 @@ int test_main(std::string input_im) {
 
   std::sort(results.begin(), results.end());
 
-  for (size_t i = 995; i < 1000; i++) {
+  for (size_t i = 990; i < 1000; i++) {
     float pct;
     int cls;
     std::tie(pct, cls) = results[i];
