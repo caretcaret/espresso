@@ -12,9 +12,9 @@
 
 namespace Espresso {
 
-#define IMAGES 1
+#define DEFAULT_N_IMAGES 10
 
-double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
+double run_net(Espresso::Layer output_layer, bool use_gpu=false, int n_images=DEFAULT_N_IMAGES) {
   // JIT compile before timing code
 
   LOG(INFO) << "Compiling...";
@@ -31,7 +31,7 @@ double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
 
   double start_time = CycleTimer::currentSeconds();
 
-  LOG(INFO) << "Running...";
+  LOG(INFO) << "Running... ";
 
   // run compiled code and place it into a buffer (still on the GPU for timing purposes)
   Halide::Buffer output_buffer(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
@@ -42,15 +42,15 @@ double run_net(Espresso::Layer output_layer, bool use_gpu=false) {
   // Move the buffer onto the CPU
   Halide::Image<float> output(output_buffer);
 
-  LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
+  LOG(INFO) << (end_time - start_time) / n_images * 1000 << "ms/image";
 
   return end_time - start_time;
 }
 
-Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_gpu=false) {
+Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_gpu=false, int n_images=DEFAULT_N_IMAGES) {
   // JIT compile before timing code
 
-  LOG(INFO) << "Compiling...";
+  std::cout << "Compiling...\n";
 
   if (use_gpu) {
     Halide::Target target = Halide::get_host_target();
@@ -62,9 +62,10 @@ Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_
     output_layer.forward.compile_jit();
   }
 
-  double start_time = CycleTimer::currentSeconds();
+  std::cout << "Running... ";
+  std::cout.flush();
 
-  LOG(INFO) << "Running...";
+  double start_time = CycleTimer::currentSeconds();
 
   // run compiled code and place it into a buffer (still on the GPU for timing purposes)
   Halide::Buffer output_buffer(Halide::Float(32), output_layer.x, output_layer.y, output_layer.z, output_layer.w);
@@ -76,18 +77,20 @@ Halide::Image<float> run_net_with_output(Espresso::Layer output_layer, bool use_
   Halide::Image<float> output(output_buffer);
   LOG(INFO) << output;
 
-  LOG(INFO) << (end_time - start_time) / IMAGES * 1000 << "ms/image";
+  std::cout << (end_time - start_time) / n_images * 1000 << " ms/image";
 
   return output;
 }
 
 // yolohack lol
-Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam input_labels) {
+Layer bvlc_reference_caffenet(Halide::ImageParam input_data, Halide::ImageParam input_labels, int n_images=DEFAULT_N_IMAGES) {
   NetParameter param;
   ReadNetParamsFromBinaryFile("./models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel", &param);
 
-  Espresso::Layer data = Espresso::MemoryData(input_data, 227, 227, 3, IMAGES); //1
-  Espresso::Layer labels = Espresso::MemoryData(input_labels, 1, 1, 1, IMAGES); //2
+  std::cout << "Loading images...\n";
+
+  Espresso::Layer data = Espresso::MemoryData(input_data, 227, 227, 3, n_images); //1
+  Espresso::Layer labels = Espresso::MemoryData(input_labels, 1, 1, 1, n_images); //2
 
   int conv1_filters = 96, conv1_size = 11, conv1_stride = 4;
   Halide::ImageParam kernel1(Halide::type_of<float>(), 4);
@@ -365,7 +368,7 @@ double test_ffnn(std::default_random_engine& generator,
   return run_net(layer2, true);
 }
 
-int test_main(std::string input_im) {
+int test_main(std::vector<std::string>& input_ims) {
   std::random_device rd;
   std::default_random_engine generator(rd());
 
@@ -382,48 +385,46 @@ int test_main(std::string input_im) {
 
   ReadProtoFromBinaryFile(mean_proto, &mean_blob);
 
-  Halide::Image<float> im = load_ppm<float>(input_im);
+  int count = input_ims.size();
   Halide::Image<float> mean_im = from_blob(mean_blob);
   Halide::ImageParam input_data(Halide::type_of<float>(), 4);
-  Halide::Image<float> input_data_(227, 227, 3, IMAGES);
+  Halide::Image<float> input_data_(227, 227, 3, count);
 
-  for (int k = 0; k < 3; k++) {
-    for (int j = 0; j < 227; j++) {
-      for (int i = 0; i < 227; i++) {
-        input_data_(i, j, k, 0) = 256.0f * im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k);
+  for (int l = 0; l < count; l++) {
+    Halide::Image<float> im = load_ppm<float>(input_ims[l]);
+    for (int k = 0; k < 3; k++) {
+      for (int j = 0; j < 227; j++) {
+        for (int i = 0; i < 227; i++) {
+          input_data_(i, j, k, l) = 256.0f * im(i + 15, j + 15, k) - mean_im(i + 15, j + 15, k);
+        }
       }
     }
   }
 
   Halide::ImageParam input_labels(Halide::type_of<int>(), 4);
   input_data.set(input_data_);
-  input_labels.set(Espresso::fill_random(Halide::Image<int>(1, 1, 1, IMAGES), generator, 500, 166)); // too lazy to initialize properly
-  Espresso::Layer net = bvlc_reference_caffenet(input_data, input_labels);
+  input_labels.set(Espresso::fill_random(Halide::Image<int>(1, 1, 1, count), generator, 500, 166)); // too lazy to initialize properly
+  Espresso::Layer net = bvlc_reference_caffenet(input_data, input_labels, count);
 
-  Halide::Image<float> output = run_net_with_output(net, true);
+  Halide::Image<float> output = run_net_with_output(net, true, count);
 
-  std::vector<std::tuple<float, int> > results;
+  for (int l = 0; l < count; l++) {
+    std::vector<std::tuple<float, int> > results;
+    for (int i = 0; i < 1000; i++) {
+      results.push_back(std::make_pair(output(i, 0, 0, l), i));
+    }
+    std::sort(results.begin(), results.end());
 
-  for (int i = 0; i < 1000; i++) {
-    results.push_back(std::make_pair(output(i, 0, 0, 0), i));
+    std::cout << "\n=== " << input_ims[l] << " ===\n";
+
+    for (size_t i = 0; i < 10; i++) {
+      float pct;
+      int cls;
+      std::tie(pct, cls) = results[1000-1-i];
+      std::cout << "[" << i << "] " << classes[cls] << " (" << 100 * pct << "%)\n";
+    }
   }
 
-  std::sort(results.begin(), results.end());
-
-  for (size_t i = 990; i < 1000; i++) {
-    float pct;
-    int cls;
-    std::tie(pct, cls) = results[i];
-    LOG(INFO) << 1000 - i << " " << classes[cls] << " " << 100 * pct << "%";
-  }
-
-  // test_convolution(generator, 2048, 2048);
-  // test_pooling(generator, "max", 2048, 2048);
-  // test_LRN(generator, 2048, 2048);
-  // test_flatten(generator);
-  // test_eltwise(generator);
-  // test_concat(generator);
-  // test_ffnn(generator);
   return 0;
 }
 
