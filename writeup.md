@@ -26,14 +26,30 @@ Scheduling in Halide defines order and locality, and allows us to exploit CPU or
 Halide aggressively inlines functions in multi-stage pipelines. What this means for Espresso is that if a function is not explicitly scheduled, it will most likely be inlined into the next explictly scheduled step in the Espresso pipeline. This can improve performance and memory usage, since we do not have to store an intermediate image for the inlined function.
 
 ## Results
-We tested our implementation of CaffeNet in Espresso using an nVIDIA GTX 770 GPU with 2GB of RAM. Our reference benchmark for both performance and correctness was the same network run in Caffe.
 
-gtx770, batch size 30
-fastish
-profile graph
-future work - potential improvements, time
+### Performance
+We tested our implementation of CaffeNet in Espresso using an nVIDIA GTX 770 GPU with 2GB of RAM. Our reference benchmark for both performance and correctness was the same network run in Caffe. We tested on various 256x256x3 images, with a batch size of 30 images on Espresso and 10 images on Caffe. The batch size is larger with Espresso because of Halide's inlining - we manage to save some memory by not storing intermediate layers. We also tested Espresso on a CPU (a Core i7 4770k), but weren't able to test Caffe on a CPU due to compilation issues. (graph)
+
+We achieved speeds of about 52ms/image when using a batch size of 30, which remains uncompetitive with Caffe. This is partially due to the fact that Caffe uses cuDNN, a library specifically optimized for neural networks that Halide does not use when compiling (and will not in the forseeable future). We believe that much of the remainder can be made up by further optimizing our layer implementations.
+
+The majority of the computation time was spent in the convolutional layers. Caffe uses a highly tuned matrix multiplication to perform convolution, while our implmentation does the convolution directly. We believe that if we implement convolution through FFTs and matrix multiplication, we could see additional speedup. Unfortunately, we were unable to complete this implementation given the time constraints.
+
+We also tested Espresso on different batch sizes. We found that the more images we ran per batch, the faster the run was per batch. This is because there is overhead in copying the image data from the CPU to the GPU - we noticed little speedup when we increased the batch size when running on the CPU only.
+
+### Simplicity
+We were able to achieve these results with much less time spent optimizing the code than we would have done using Caffe. While not a perfect metric, we can use code size as an estimate for complexity. (graph) As shown by the above image, Espressso can define and schedule layers much more concisely than Caffe. Also, we were able to achieve the above performance results with only two contributors over the span of less than a week - Caffe has been optimized by a hundred contributors over a much longer period.
+
+### Future Work
+If we had more time, we would have attempted to implement training in Halide. This is a more difficult task than testing, because there is backpropagation: the results of every intermediate layer now must be stored and used on the layer above it. This would likely entail splitting the pipeline code into multiple calls to `realize()`, which would cause some performance loss from the lack of function inlining. However, we would not have to move the buffer back on to the CPU, becuase Halide provides a `Buffer` type which can exist on the GPU.
+
+We would also focus on bringing performance up to the point where images could be run through the network in <10ms. We firmly believe that it is possible with more intelligent scheduling and with more efficient algorithms for some of the layers.
 
 ## References
+
+Jonathan Ragan-Kelley, Connelly Barnes, Andrew Adams, Sylvain Paris, Frdo Durand, and Saman Amarasinghe. 2013. Halide: a language and compiler for optimizing parallelism, locality, and recomputation in image processing pipelines. In Proceedings of the 34th ACM SIGPLAN conference on Programming language design and implementation (PLDI ’13). ACM, New York, NY, USA, 519-530. DOI=10.1145/2491956.2462176 http://doi.acm.org/10.1145/2491956.2462176
+
+
+Jia, Yangqing and Shelhamer, Evan and Donahue, Jeff and Karayev, Sergey and Long, Jonathan and Girshick, Ross and Guadarrama, Sergio and Darrell, Trevor. Caffe: Convolutional Architecture for Fast Feature Embedding. 2014. arXiv:1408.5093
 
 ## Work
 Work was divided evenly.
