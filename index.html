@@ -207,13 +207,57 @@ pre .il { color: #40a070 } /* Literal.Number.Integer.Long */.syntax pre .hll { b
 			</section>
 
 		<!-- Two -->
-			<section id="writeup" class="wrapper style2 align-center">
+
+			<section id="writeup" class="wrapper">
 				<div class="container">
-					<header>
-						<h2>Preliminary Results</h2>
-						<p>Friday, May 8, 2015</p>
+
+					<header class="major">
+						<h2>Espresso</h2>
+						<p>Speeding up and debittering Caffe by adding Halide</p>
 					</header>
-					<div class="row">
+
+<h2>
+<a id="user-content-summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h2>
+
+<p>Espresso is a partial implementation of Caffe in the Halide image processing language. It supports fine-tuning of deep neural networks to achieve high evaluation performance on multiple platforms.</p>
+
+<h2>
+<a id="user-content-background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h2>
+
+<h3>
+<a id="user-content-caffe" class="anchor" href="#caffe" aria-hidden="true"><span class="octicon octicon-link"></span></a>Caffe</h3>
+
+<p>Caffe is a deep learning framework developed by the Berkeley Vision and Learning Center. It features GPU evaluation and training of convolutional neural networks with a clean interface. Models are described by configuration files and trained models can be exported.</p>
+
+<h3>
+<a id="user-content-halide" class="anchor" href="#halide" aria-hidden="true"><span class="octicon octicon-link"></span></a>Halide</h3>
+
+<p>Halide is an domain-specific language embedded in C++. It decouples algorithm implementations from scheduling and organization of computation, making it easier to optimize image processing pipelines for performance on multiple platforms.</p>
+
+<h3>
+<a id="user-content-caffenet" class="anchor" href="#caffenet" aria-hidden="true"><span class="octicon octicon-link"></span></a>CaffeNet</h3>
+
+              <img class="image fit" src="images/dnn.png" alt="" />
+
+
+<p>CaffeNet is a 9-layer DNN trained on ILSVRC 2012. It takes <code>256x256x3</code> images as input, and outputs a 1000-wide probability vector, where every item in the vector corresponds with a class. The first five layers are convolutional, and the next three are fully-connected. The last fully-connected layer is connected with a softmax which produces the distribution over the 1000 class labels.</p>
+
+<h2>
+<a id="user-content-approach" class="anchor" href="#approach" aria-hidden="true"><span class="octicon octicon-link"></span></a>Approach</h2>
+
+<h3>
+<a id="user-content-architecture" class="anchor" href="#architecture" aria-hidden="true"><span class="octicon octicon-link"></span></a>Architecture</h3>
+
+<p>DNNs in Espresso are expressed as compositions of <a href="https://github.com/jczhang/espresso/include/layer.h"><code>Layer</code></a>s. Every <code>Layer</code> takes a <code>Layer</code> as input, besides the <code>MemoryData Layer</code>, which is used for input. We implemented most of the layers found in Caffe. Input is represented as a four-dimensional matrix <code>(x, y, z, n)</code>, where <code>(x, y)</code> is a single image, <code>z</code> represents the channels in a single image, and <code>n</code> is the image index. For our CaffeNet demo, we take all images in the PPM format from an input directory. By expressing input in this way, we can run multiple images through CaffeNet simultaneously, ensuring that we maximize the amount of work done on the GPU before copying data back out to the CPU. DNNs can be loaded from a <code>.caffemodel</code> file, or built from hand in <code>C++</code>. Each individual layer, as a Halide construct, consists of an algorithm and a schedule. Specifically, every <code>Layer</code> has a <code>Halide::Func forward</code>, which represents the output of the layer. (Currently, Espresso does not support back propogation for training). These functions are defined in the same four dimensions as the input, though they are not constrained in what the dimension sizes actually are.</p>
+
+<h3>
+<a id="user-content-scheduling-layers" class="anchor" href="#scheduling-layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Scheduling Layers</h3>
+
+<p>Scheduling in Halide defines order and locality, and allows us to exploit CPU or GPU parallelism. In Espresso, we aggressively schedule layers to achieve maximum performance. We focused on GPU performance, so our scheduling is done solely through Halide's GPU scheduling primitives. There are a few patterns in scheduling that we found to be very effective. First, tiling pieces of layers and assigning them to thread blocks dramatically sped up computation in most cases, as we were able to exploit both locality and warps not diverging. This pattern works best when the layer requires surrounding pixels to compute, such as in a convolution. Another effective pattern was a call to <code>vectorize()</code>, which is essentially a one-dimensional tile. This pattern works best on layers with only horizontal memory accesses, like our <code>InnerProduct</code> layer. We have provided helper functions for both of these patterns.</p>
+
+<p>Halide aggressively inlines functions in multi-stage pipelines. What this means for Espresso is that if a function is not explicitly scheduled, it will most likely be inlined into the next explictly scheduled step in the Espresso pipeline. This can improve performance and memory usage, since we do not have to store an intermediate image for the inlined function.</p>
+
+<div class="row">
 						<section class="feature 6u 12u$(small)">
 							<h3 class="title">Halide algorithm</h3>
               <div class="syntax">
@@ -243,7 +287,8 @@ Func output(i, j) =
 </pre>
 -->
 						</section>
-						<section class="feature 6u$ 12u$(small)">
+
+												<section class="feature 6u$ 12u$(small)">
 
 							<h3 class="title">Halide scheduling</h3>
               <div class="syntax">
@@ -273,21 +318,60 @@ output.tile(i, j,
 </pre>
 -->
 						</section>
-						<section class="feature 6u 12u$(small)">
-              <!--<img class="image fit" src="images/pic03.jpg" alt="" />-->
-							<h3 class="title">Preliminary performance results</h3>
-              <p>We have found that Halide is sufficiently expressive enough for neural network implementation without additional modifications to the Halide compiler. Up to now, we've reimplemented most of the Caffe layers in Halide and can load them from Caffe configuration files.</p>
-              <p>We are able to run Caffe's reference AlexNet network end-to-end on the CPU and GPU, achieving over 320x speedup from the sequential, unscheduled code. In terms of raw numbers, a 4770K Core i7 processor can evaluate an image in 320 ms. Using a GTX 770 GPU, an image can be evaluated in 190 ms, with batch size 20. For comparison, Caffe's GPU implementation on GTX 770 can evaluate an image in 2.58 ms, with batch size 50. We have ideas for many more optimizations that will help us push that number down to the sub-10 ms range.</p>
-              <p>Timing individual layers on the GPU vs the CPU, we achieve a 2x speedup on convolutional layers, 8x speedup on pooling layers, and 9x speedup on local region normalization.</p>
-						</section>
-						<section class="feature 6u$ 12u$(small)">
-							<h3 class="title">Final results to be shown</h3>
-              <p>On Monday, May 11, 2015, we'll give a presentation that demonstrates performance results competitive with Caffe and <a href="https://github.com/soumith/convnet-benchmarks">other benchmarks</a>. We'll give a demo that shows Espresso's user-friendliness in applications, development, and research. We'll also explain the challenges of competing with existing GPU deep learning implementations and the gotchas of writing parallel neural network code in Halide.</p>
-              <img class="image fit" src="images/dnn.png" alt="" />
-						</section>
-					</div>
+</div>
+
+<h2>
+<a id="user-content-results" class="anchor" href="#results" aria-hidden="true"><span class="octicon octicon-link"></span></a>Results</h2>
+
+<h3>
+<a id="user-content-performance" class="anchor" href="#performance" aria-hidden="true"><span class="octicon octicon-link"></span></a>Performance</h3>
+
+<p>We tested our implementation of CaffeNet in Espresso using an nVIDIA GTX 770 GPU with 2GB of RAM. Our reference benchmark for both performance and correctness was the same network run in Caffe. We tested on various 256x256x3 images, with a batch size of 30 images on Espresso and 10 images on Caffe. The batch size is larger with Espresso because of Halide's inlining - we manage to save some memory by not storing intermediate layers. We also tested Espresso on a CPU (a Core i7 4770k), but weren't able to test Caffe on a CPU due to compilation issues.</p>
+
+
+			<span class="image left">
+				<img src="images/perf.png">
+			</span>
+<p>We achieved speeds of about 52ms/image when using a batch size of 30, which remains uncompetitive with Caffe. This is partially due to the fact that Caffe uses cuDNN, a library specifically optimized for neural networks that Halide does not use when compiling (and will not in the forseeable future). We believe that much of the remainder can be made up by further optimizing our layer implementations.</p>
+
+<p>The majority of the computation time was spent in the convolutional layers. Caffe uses a highly tuned matrix multiplication to perform convolution, while our implmentation does the convolution directly. We believe that if we implement convolution through FFTs and matrix multiplication, we could see additional speedup. Unfortunately, we were unable to complete this implementation given the time constraints.</p>
+
+<span class="image left">
+<img src="images/batch.png">
+</span>
+
+<p>We also tested Espresso on different batch sizes. We found that the more images we ran per batch, the faster the run was per batch. This is because there is overhead in copying the image data from the CPU to the GPU - we noticed little speedup when we increased the batch size when running on the CPU only.</p>
+
+<h3>
+<a id="user-content-simplicity" class="anchor" href="#simplicity" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simplicity</h3>
+
+<p>We were able to achieve these results with much less time spent optimizing the code than we would have done using Caffe. While not a perfect metric, we can use code size as an estimate for complexity. As shown by the figure, Espressso can define and schedule layers much more concisely than Caffe. Also, we were able to achieve the above performance results with only two contributors over the span of less than a week -- Caffe has been optimized by a hundred contributors over a much longer period.</p>
+
+<span class="image left"><img src="images/codesize.png"></span>
+
+<h3>
+<a id="user-content-future-work" class="anchor" href="#future-work" aria-hidden="true"><span class="octicon octicon-link"></span></a>Future Work</h3>
+
+<p>If we had more time, we would have attempted to implement training in Halide. This is a more difficult task than testing, because there is backpropagation: the results of every intermediate layer now must be stored and used on the layer above it. This would likely entail splitting the pipeline code into multiple calls to <code>realize()</code>, which would cause some performance loss from the lack of function inlining. However, we would not have to move the buffer back on to the CPU, becuase Halide provides a <code>Buffer</code> type which can exist on the GPU.</p>
+
+<p>We would also focus on bringing performance up to the point where images could be run through the network in less than 10ms. We firmly believe that it is possible with more intelligent scheduling and with more efficient algorithms for some of the layers. 
+Because Halide scheduling can be compiled just-in-time, this means that the implementation of each layer has control over when they are inlined into another layer or not. This is a potential area for speedup that cannot be realized in a framework like Caffe, where each layer is a precompiled function. Currently, we take the most composable approach where each layer decides whether to store intermediate results based on its own operations, but more work can be put into determining how to schedule over groups of layers in order to squeeze out more performance.</p>
+
+<h2>
+<a id="user-content-references" class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
+
+<p>Jonathan Ragan-Kelley, Connelly Barnes, Andrew Adams, Sylvain Paris, Frdo Durand, and Saman Amarasinghe. 2013. Halide: a language and compiler for optimizing parallelism, locality, and recomputation in image processing pipelines. In Proceedings of the 34th ACM SIGPLAN conference on Programming language design and implementation (PLDI ’13). ACM, New York, NY, USA, 519-530. DOI=10.1145/2491956.2462176 <a href="http://doi.acm.org/10.1145/2491956.2462176">http://doi.acm.org/10.1145/2491956.2462176</a></p>
+
+<p>Jia, Yangqing and Shelhamer, Evan and Donahue, Jeff and Karayev, Sergey and Long, Jonathan and Girshick, Ross and Guadarrama, Sergio and Darrell, Trevor. Caffe: Convolutional Architecture for Fast Feature Embedding. 2014. arXiv:1408.5093</p>
+
+<h2>
+<a id="user-content-work" class="anchor" href="#work" aria-hidden="true"><span class="octicon octicon-link"></span></a>Work</h2>
+
+<p>Work was divided evenly.</p>
+</article>
+
 				</div>
-			</section>
+
 
 		<!-- Footer -->
 			<footer id="footer">
